@@ -1,9 +1,14 @@
-# Global
+# Planet Atlas
 
-A professional [Next.js](https://nextjs.org) application scaffold with a complete
-CI/CD pipeline. This repository currently contains **infrastructure only** — a
-minimal placeholder page plus the full tooling, testing, containerization, and
-delivery pipeline. Application features come later.
+An explorable 3D globe of the world's news, events, and history, built on
+[Next.js](https://nextjs.org). Zoom maps to administrative scale and a left panel
+ranks "what matters here now." See [Overview.md](Overview.md) for the product
+vision and roadmap.
+
+**Status:** Phase 0 (infrastructure + CI/CD) is complete, and Phase 1's first
+vertical slice is in — a MapLibre globe, a file-backed events store, click-to-add,
+voting, a viewport-ranked panel, and typed geocode search. Data sources (GDELT,
+Wikidata) and PostGIS come in later phases, behind existing seams.
 
 ## Stack
 
@@ -53,15 +58,38 @@ The full local gate mirrors CI:
 pnpm install && pnpm lint && pnpm typecheck && pnpm test && pnpm build
 ```
 
+## Running the atlas
+
+`pnpm dev`, then open the app. Notes:
+
+- **Events store.** Events persist to a JSON file at `ATLAS_DATA_DIR` (default
+  `<cwd>/.data`, gitignored), seeded on first run from `src/data/seed-events.json`.
+  This is a Phase-1 stand-in for a database. **Under standalone/Docker the default
+  dir is ephemeral** (a throwaway container path) — mount a volume and set
+  `ATLAS_DATA_DIR` (e.g. `/data`), or move to PostGIS, for durable storage. The
+  store is single-process only.
+- **Geocoding.** Typed place search calls OpenStreetMap **Nominatim** server-side
+  (no key). Their usage policy requires an identifying `User-Agent` — set
+  `NOMINATIM_USER_AGENT`. See `.env.example`.
+- **Basemap.** Keyless CARTO dark raster tiles; swap the constant in
+  `src/config/map.ts` for vector/keyed tiles later.
+
 ## Project layout
 
 ```
-src/app/        App Router routes (layout, page, globals.css)
-src/lib/        Shared utilities (e.g. cn() class merge)
-e2e/            Playwright specs
-.github/        CI/CD workflows + a reusable setup composite action
-Dockerfile      Multi-stage production image (standalone, non-root)
-compose.yaml    VPS stack: app + Caddy reverse proxy (TLS)
+src/app/           App Router routes + API handlers (events, geocode)
+src/components/     Globe, panel, add, search UI (client)
+src/state/         React context (single source of client state)
+src/hooks/         Data hook (useEvents)
+src/lib/           Pure logic: importance, viewport filters, zod schemas, cn()
+src/server/        Server-only: events repository + geocoder (the swap seams)
+src/config/        Basemap, data-path, geocoder constants
+src/data/          Committed seed events
+src/types/         Domain model (AtlasEvent)
+e2e/               Playwright specs
+.github/           CI/CD workflows + a reusable setup composite action
+Dockerfile         Multi-stage production image (standalone, non-root)
+compose.yaml       VPS stack: app + Caddy reverse proxy (TLS)
 ```
 
 ## Branch model
