@@ -21,7 +21,7 @@ export function AddControls() {
         onClick={() => setActiveTool(isAdd ? "explore" : "add")}
         aria-pressed={isAdd}
         className={cn(
-          "absolute bottom-4 left-1/2 z-20 -translate-x-1/2 rounded-full px-4 py-2 text-sm font-medium shadow-lg transition-colors",
+          "absolute bottom-16 left-1/2 z-20 -translate-x-1/2 rounded-full px-4 py-2 text-sm font-medium shadow-lg transition-colors",
           isAdd
             ? "bg-emerald-400 text-black"
             : "bg-white/10 text-white backdrop-blur hover:bg-white/20",

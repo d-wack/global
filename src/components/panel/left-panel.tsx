@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { rankByImportance } from "@/lib/importance";
+import { filterAsOf } from "@/lib/timeline";
 import {
   applyCategoryFilter,
   filterVisible,
@@ -22,6 +23,7 @@ export function LeftPanel() {
   const {
     events,
     bounds,
+    selectedYear,
     activeCategories,
     toggleCategory,
     search,
@@ -38,10 +40,10 @@ export function LeftPanel() {
     return () => clearInterval(id);
   }, []);
 
-  const inView = useMemo(
-    () => (bounds ? filterVisible(events, bounds) : events),
-    [events, bounds],
-  );
+  const inView = useMemo(() => {
+    const asOf = filterAsOf(events, selectedYear);
+    return bounds ? filterVisible(asOf, bounds) : asOf;
+  }, [events, bounds, selectedYear]);
 
   const ranked = useMemo(
     () =>
@@ -53,7 +55,7 @@ export function LeftPanel() {
   );
 
   return (
-    <aside className="absolute top-0 left-0 z-10 flex h-full w-80 max-w-[85vw] flex-col border-r border-white/10 bg-black/75 backdrop-blur">
+    <aside className="absolute top-0 bottom-14 left-0 z-10 flex w-80 max-w-[85vw] flex-col border-r border-white/10 bg-black/75 backdrop-blur">
       <div className="space-y-2 border-b border-white/10 p-3">
         <input
           type="search"

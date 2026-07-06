@@ -6,6 +6,7 @@ import maplibregl, { type Map as MlMap, type Marker } from "maplibre-gl";
 import { useEffect, useRef } from "react";
 
 import { BASEMAP_STYLE, CATEGORY_COLORS, INITIAL_VIEW } from "@/config/map";
+import { filterAsOf } from "@/lib/timeline";
 import { useAtlas } from "@/state/atlas-context";
 
 /**
@@ -42,7 +43,8 @@ export default function GlobeMap() {
         zoom: INITIAL_VIEW.zoom,
         pitch: INITIAL_VIEW.pitch,
         bearing: INITIAL_VIEW.bearing,
-        attributionControl: { compact: true },
+        // Add attribution ourselves (top-right) so the bottom timeline can't hide it.
+        attributionControl: false,
       });
     } catch (err) {
       // e.g. no WebGL available. The panel/search still work (bounds stay null,
@@ -53,7 +55,11 @@ export default function GlobeMap() {
     mapRef.current = map;
     map.addControl(
       new maplibregl.NavigationControl({ visualizePitch: true }),
-      "bottom-right",
+      "top-right",
+    );
+    map.addControl(
+      new maplibregl.AttributionControl({ compact: true }),
+      "top-right",
     );
 
     const emitView = () => {
@@ -111,14 +117,14 @@ export default function GlobeMap() {
     }
   }, [atlas.activeTool]);
 
-  // Sync markers to the current events (diff by id).
+  // Sync markers to the events visible at the selected year (diff by id).
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
     const markers = markersRef.current;
     const seen = new Set<string>();
 
-    for (const event of atlas.events) {
+    for (const event of filterAsOf(atlas.events, atlas.selectedYear)) {
       seen.add(event.id);
       if (markers.has(event.id)) continue;
       const el = document.createElement("div");
@@ -137,7 +143,7 @@ export default function GlobeMap() {
         markers.delete(id);
       }
     }
-  }, [atlas.events]);
+  }, [atlas.events, atlas.selectedYear]);
 
   // Size with h-full/w-full, not `absolute inset-0`: maplibre-gl.css forces
   // `position: relative` on its container, which cancels inset-based stretching

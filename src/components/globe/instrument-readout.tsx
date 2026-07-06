@@ -21,7 +21,7 @@ export function InstrumentReadout() {
   const { view } = useAtlas();
 
   return (
-    <div className="pointer-events-none absolute top-3 right-3 z-10 rounded-md border border-emerald-400/20 bg-black/70 px-3 py-2 font-mono text-xs leading-relaxed text-emerald-300 tabular-nums backdrop-blur">
+    <div className="pointer-events-none absolute top-3 left-[21rem] z-10 rounded-md border border-emerald-400/20 bg-black/70 px-3 py-2 font-mono text-xs leading-relaxed text-emerald-300 tabular-nums backdrop-blur">
       <div className="mb-1 text-[10px] tracking-[0.2em] text-emerald-400/60">
         PLANET ATLAS
       </div>

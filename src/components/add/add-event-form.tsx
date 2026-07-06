@@ -64,7 +64,7 @@ export function AddEventForm({
     <form
       onSubmit={handleSubmit}
       aria-label="Add event"
-      className="absolute bottom-20 left-1/2 z-20 w-80 max-w-[85vw] -translate-x-1/2 space-y-2 rounded-lg border border-white/10 bg-black/85 p-3 shadow-xl backdrop-blur"
+      className="absolute bottom-28 left-1/2 z-40 w-80 max-w-[85vw] -translate-x-1/2 space-y-2 rounded-lg border border-white/10 bg-black/85 p-3 shadow-xl backdrop-blur"
     >
       <p className="font-mono text-[11px] text-emerald-300/70">
         {point.lat.toFixed(4)}, {point.lng.toFixed(4)}

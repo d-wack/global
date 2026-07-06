@@ -6,6 +6,7 @@ import { AddControls } from "@/components/add/add-controls";
 import { InstrumentReadout } from "@/components/globe/instrument-readout";
 import { LeftPanel } from "@/components/panel/left-panel";
 import { GeocodeSearch } from "@/components/search/geocode-search";
+import { TimelineScrubber } from "@/components/timeline/timeline-scrubber";
 import { AtlasProvider } from "@/state/atlas-context";
 
 // MapLibre touches the DOM/WebGL and must not render on the server.
@@ -27,6 +28,7 @@ export function AtlasView() {
         <LeftPanel />
         <GeocodeSearch />
         <AddControls />
+        <TimelineScrubber />
       </div>
     </AtlasProvider>
   );
