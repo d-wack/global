@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 
 import { InstrumentReadout } from "@/components/globe/instrument-readout";
+import { LeftPanel } from "@/components/panel/left-panel";
 import { AtlasProvider } from "@/state/atlas-context";
 
 // MapLibre touches the DOM/WebGL and must not render on the server.
@@ -21,6 +22,7 @@ export function AtlasView() {
       <div className="fixed inset-0 overflow-hidden bg-[#05070a]">
         <GlobeMap />
         <InstrumentReadout />
+        <LeftPanel />
       </div>
     </AtlasProvider>
   );
