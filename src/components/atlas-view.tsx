@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 
+import { AddControls } from "@/components/add/add-controls";
 import { InstrumentReadout } from "@/components/globe/instrument-readout";
 import { LeftPanel } from "@/components/panel/left-panel";
 import { AtlasProvider } from "@/state/atlas-context";
@@ -23,6 +24,7 @@ export function AtlasView() {
         <GlobeMap />
         <InstrumentReadout />
         <LeftPanel />
+        <AddControls />
       </div>
     </AtlasProvider>
   );
