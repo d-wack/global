@@ -1,0 +1,6 @@
+# Caddy automatically provisions and renews TLS for a real domain.
+# For APP_DOMAIN=localhost it serves over Caddy's local (internal) CA.
+{$APP_DOMAIN} {
+	encode gzip zstd
+	reverse_proxy app:3000
+}

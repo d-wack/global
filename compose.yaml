@@ -1,0 +1,44 @@
+# Deployment stack for the VPS. Exercised only at deploy time.
+#
+#   APP_IMAGE  - full image ref to run (e.g. ghcr.io/d-wack/global:main-<sha>)
+#   APP_DOMAIN - public hostname Caddy serves + provisions TLS for
+#
+# Copy .env.example to .env on the server and fill these in.
+
+services:
+  app:
+    image: ${APP_IMAGE:-ghcr.io/d-wack/global:latest}
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      HOSTNAME: "0.0.0.0"
+    # Not published to the host — only Caddy talks to it over the internal network.
+    expose:
+      - "3000"
+    networks:
+      - web
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN:-localhost}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - app
+    networks:
+      - web
+
+networks:
+  web:
+
+volumes:
+  caddy_data:
+  caddy_config:

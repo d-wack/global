@@ -1,0 +1,31 @@
+# Dependencies and build output (reinstalled/rebuilt inside the image)
+node_modules
+.next
+out
+build
+coverage
+playwright-report
+test-results
+blob-report
+
+# VCS and CI
+.git
+.github
+.gitignore
+
+# Local env & editor
+.env*
+!.env.example
+.vscode
+.idea
+
+# Tests and hooks not needed at build time
+e2e
+.husky
+
+# Docker/compose and docs
+Dockerfile
+.dockerignore
+compose.yaml
+Caddyfile
+*.md
