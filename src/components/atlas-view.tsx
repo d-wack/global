@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { AddControls } from "@/components/add/add-controls";
 import { InstrumentReadout } from "@/components/globe/instrument-readout";
 import { LeftPanel } from "@/components/panel/left-panel";
+import { GeocodeSearch } from "@/components/search/geocode-search";
 import { AtlasProvider } from "@/state/atlas-context";
 
 // MapLibre touches the DOM/WebGL and must not render on the server.
@@ -24,6 +25,7 @@ export function AtlasView() {
         <GlobeMap />
         <InstrumentReadout />
         <LeftPanel />
+        <GeocodeSearch />
         <AddControls />
       </div>
     </AtlasProvider>
