@@ -24,12 +24,14 @@ export interface AtlasEvent {
   lat: number;
   /** Net community score (up minus down). May be negative. */
   votes: number;
-  /** ISO-8601 timestamp of creation. */
+  /** The year the event occurred (negative = BCE). Powers the timeline. */
+  year: number;
+  /** ISO-8601 timestamp of creation (record time; drives importance recency). */
   createdAt: string;
 }
 
 /** The fields a client supplies when adding an event; the server assigns the rest. */
 export type NewEventInput = Pick<
   AtlasEvent,
-  "title" | "description" | "category" | "lng" | "lat"
+  "title" | "description" | "category" | "lng" | "lat" | "year"
 >;

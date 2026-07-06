@@ -14,6 +14,8 @@ export const newEventSchema = z.object({
   category: z.enum(EVENT_CATEGORIES),
   lng: z.number().min(-180).max(180),
   lat: z.number().min(-90).max(90),
+  // Occurred year (negative = BCE). Required: the store never sees a yearless event.
+  year: z.number().int().min(-4000).max(3000),
 });
 
 export const voteSchema = z.object({
@@ -22,6 +24,12 @@ export const voteSchema = z.object({
 
 export const geocodeQuerySchema = z.object({
   q: z.string().trim().min(1, "Query is required").max(200),
+});
+
+// Query params arrive as strings, so coerce lat/lng to numbers before validating.
+export const placeInfoQuerySchema = z.object({
+  lat: z.coerce.number().min(-90).max(90),
+  lng: z.coerce.number().min(-180).max(180),
 });
 
 export type NewEventBody = z.infer<typeof newEventSchema>;

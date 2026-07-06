@@ -41,6 +41,7 @@ export class FileEventsRepository implements EventsRepository {
         category: input.category,
         lng: input.lng,
         lat: input.lat,
+        year: input.year,
         votes: 0,
         createdAt: new Date().toISOString(),
       };

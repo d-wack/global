@@ -18,6 +18,7 @@ function evt(overrides: Partial<AtlasEvent> = {}): AtlasEvent {
     lng: 0,
     lat: 0,
     votes: 0,
+    year: 2026,
     createdAt: "2026-07-06T00:00:00.000Z",
     ...overrides,
   };

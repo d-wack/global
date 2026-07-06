@@ -49,6 +49,7 @@ const validBody = {
   category: "news",
   lng: 10,
   lat: 20,
+  year: 2026,
 };
 
 describe("GET /api/events", () => {

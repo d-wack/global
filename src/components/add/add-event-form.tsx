@@ -32,9 +32,12 @@ export function AddEventForm({
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState<EventCategory>("news");
+  // Occurred year, defaulting to the current year (out of render, to stay pure).
+  const [year, setYear] = useState(() => new Date().getFullYear());
   const [submitting, setSubmitting] = useState(false);
 
-  const canSubmit = title.trim().length > 0 && !submitting;
+  const canSubmit =
+    title.trim().length > 0 && Number.isFinite(year) && !submitting;
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -47,6 +50,7 @@ export function AddEventForm({
         category,
         lng: point.lng,
         lat: point.lat,
+        year,
       });
     } finally {
       setSubmitting(false);
@@ -84,6 +88,14 @@ export function AddEventForm({
           </option>
         ))}
       </select>
+      <input
+        aria-label="Year"
+        type="number"
+        value={year}
+        onChange={(e) => setYear(e.target.valueAsNumber)}
+        placeholder="Year (negative = BCE)"
+        className={field}
+      />
       <textarea
         aria-label="Description"
         value={description}

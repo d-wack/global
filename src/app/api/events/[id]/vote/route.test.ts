@@ -34,6 +34,7 @@ function makeEvent(id: string, votes = 0): AtlasEvent {
     lng: 0,
     lat: 0,
     votes,
+    year: 2026,
     createdAt: new Date().toISOString(),
   };
 }

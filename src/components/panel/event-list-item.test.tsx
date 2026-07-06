@@ -12,6 +12,7 @@ const event: AtlasEvent = {
   lng: 139.7,
   lat: 35.7,
   votes: 12,
+  year: 2026,
   createdAt: "2026-07-05T21:30:00.000Z",
 };
 

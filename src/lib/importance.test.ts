@@ -20,6 +20,7 @@ function makeEvent(overrides: Partial<AtlasEvent> = {}): AtlasEvent {
     lng: 0,
     lat: 0,
     votes: 0,
+    year: 2026,
     createdAt: new Date(NOW).toISOString(),
     ...overrides,
   };

@@ -14,6 +14,7 @@ const validEvent = {
   category: "news",
   lng: 12.5,
   lat: 41.9,
+  year: 2026,
 };
 
 describe("newEventSchema", () => {
@@ -22,8 +23,14 @@ describe("newEventSchema", () => {
   });
 
   it("defaults a missing description to an empty string", () => {
-    const { title, category, lng, lat } = validEvent;
-    const result = newEventSchema.safeParse({ title, category, lng, lat });
+    const { title, category, lng, lat, year } = validEvent;
+    const result = newEventSchema.safeParse({
+      title,
+      category,
+      lng,
+      lat,
+      year,
+    });
     expect(result.success).toBe(true);
     if (result.success) expect(result.data.description).toBe("");
   });
@@ -52,6 +59,17 @@ describe("newEventSchema", () => {
   it("rejects a non-numeric coordinate", () => {
     expect(
       newEventSchema.safeParse({ ...validEvent, lng: "east" }).success,
+    ).toBe(false);
+  });
+
+  it("accepts a negative (BCE) year but rejects a missing or non-integer year", () => {
+    expect(
+      newEventSchema.safeParse({ ...validEvent, year: -2560 }).success,
+    ).toBe(true);
+    const { year: _omit, ...noYear } = validEvent;
+    expect(newEventSchema.safeParse(noYear).success).toBe(false);
+    expect(
+      newEventSchema.safeParse({ ...validEvent, year: 1990.5 }).success,
     ).toBe(false);
   });
 });

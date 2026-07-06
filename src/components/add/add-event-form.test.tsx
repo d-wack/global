@@ -35,6 +35,9 @@ describe("AddEventForm", () => {
     fireEvent.change(screen.getByLabelText("Category"), {
       target: { value: "event" },
     });
+    fireEvent.change(screen.getByLabelText("Year"), {
+      target: { value: "1995" },
+    });
     fireEvent.click(screen.getByRole("button", { name: "Add event" }));
 
     expect(onSubmit).toHaveBeenCalledWith({
@@ -43,6 +46,7 @@ describe("AddEventForm", () => {
       category: "event",
       lng: 2.35,
       lat: 48.85,
+      year: 1995,
     });
   });
 
