@@ -83,11 +83,14 @@ export default function GlobeMap() {
     map.on("move", emitView);
     map.on("moveend", emitBounds);
     map.on("click", (e) => {
-      if (atlasRef.current.activeTool === "add") {
+      const tool = atlasRef.current.activeTool;
+      if (tool === "add") {
         atlasRef.current.setPendingPoint({
           lng: e.lngLat.lng,
           lat: e.lngLat.lat,
         });
+      } else if (tool === "inspect") {
+        void atlasRef.current.inspectAt(e.lngLat.lat, e.lngLat.lng);
       }
     });
 

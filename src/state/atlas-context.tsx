@@ -11,6 +11,7 @@ import {
 } from "react";
 
 import { useEvents, type UseEvents } from "@/hooks/use-events";
+import { usePlaceInfo, type UsePlaceInfo } from "@/hooks/use-place-info";
 import type { Bounds } from "@/lib/viewport";
 import { EVENT_CATEGORIES, type EventCategory } from "@/types/event";
 
@@ -31,7 +32,7 @@ export type ToolId = "explore" | "add" | "inspect";
 
 type FlyToBounds = (bbox: [number, number, number, number]) => void;
 
-export interface AtlasContextValue extends UseEvents {
+export interface AtlasContextValue extends UseEvents, UsePlaceInfo {
   /** Current map viewport, or null until the map first settles. */
   bounds: Bounds | null;
   setBounds: (bounds: Bounds) => void;
@@ -60,6 +61,7 @@ const AtlasContext = createContext<AtlasContextValue | null>(null);
 
 export function AtlasProvider({ children }: { children: ReactNode }) {
   const eventsApi = useEvents();
+  const placeInfoApi = usePlaceInfo();
   const [bounds, setBounds] = useState<Bounds | null>(null);
   const [view, setView] = useState<MapView | null>(null);
   const [activeCategories, setActiveCategories] = useState<Set<EventCategory>>(
@@ -82,11 +84,16 @@ export function AtlasProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const setActiveTool = useCallback((tool: ToolId) => {
-    setActiveToolState(tool);
-    // Leaving the add tool discards any in-progress placement.
-    if (tool !== "add") setPendingPoint(null);
-  }, []);
+  const { clearPlaceInfo } = placeInfoApi;
+  const setActiveTool = useCallback(
+    (tool: ToolId) => {
+      setActiveToolState(tool);
+      // Switching tools discards each tool's transient state.
+      if (tool !== "add") setPendingPoint(null);
+      if (tool !== "inspect") clearPlaceInfo();
+    },
+    [clearPlaceInfo],
+  );
 
   const registerFlyTo = useCallback((fn: FlyToBounds) => {
     flyToRef.current = fn;
@@ -99,6 +106,7 @@ export function AtlasProvider({ children }: { children: ReactNode }) {
   const value = useMemo<AtlasContextValue>(
     () => ({
       ...eventsApi,
+      ...placeInfoApi,
       bounds,
       setBounds,
       view,
@@ -118,6 +126,7 @@ export function AtlasProvider({ children }: { children: ReactNode }) {
     }),
     [
       eventsApi,
+      placeInfoApi,
       bounds,
       view,
       activeCategories,
