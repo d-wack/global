@@ -66,9 +66,18 @@ PAYLOAD=$(
 JSON
 )
 
-# Find an existing ruleset with our name.
-existing_id=$(gh api "repos/${REPO}/rulesets" --jq \
-  ".[] | select(.name == \"${RULESET_NAME}\") | .id" 2>/dev/null | head -1 || true)
+# Rulesets require a public repo or a paid plan (Pro/Team) for private repos.
+if ! gh api "repos/${REPO}/rulesets" >/dev/null 2>&1; then
+  echo "ERROR: cannot access rulesets for ${REPO}." >&2
+  echo "Branch protection / rulesets are unavailable on private repositories on the" >&2
+  echo "GitHub Free plan. Either make the repo public, or upgrade to GitHub Pro/Team," >&2
+  echo "then re-run this script." >&2
+  exit 1
+fi
+
+# Find an existing ruleset with our name (idempotent create-or-update).
+existing_id=$(gh api "repos/${REPO}/rulesets" \
+  --jq "map(select(.name == \"${RULESET_NAME}\")) | .[0].id // empty")
 
 if [[ -n "${existing_id}" ]]; then
   echo "Updating existing ruleset '${RULESET_NAME}' (id ${existing_id}) on ${REPO} ..."
