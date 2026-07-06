@@ -136,7 +136,10 @@ export default function GlobeMap() {
     }
   }, [atlas.events]);
 
+  // Size with h-full/w-full, not `absolute inset-0`: maplibre-gl.css forces
+  // `position: relative` on its container, which cancels inset-based stretching
+  // and collapses the element to 0 height (a black map).
   return (
-    <div ref={containerRef} className="absolute inset-0" data-testid="globe" />
+    <div ref={containerRef} className="h-full w-full" data-testid="globe" />
   );
 }
