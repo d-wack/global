@@ -80,7 +80,8 @@ jobs:
 
   # Single required status check for branch protection. Aggregates every job above.
   ci-success:
-    name: CI Success
+    # Name matches the job id so the required status check is exactly "ci-success".
+    name: ci-success
     if: always()
     needs: [lint, typecheck, test, build, e2e]
     runs-on: ubuntu-latest
