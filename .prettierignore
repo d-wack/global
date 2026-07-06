@@ -1,0 +1,14 @@
+# Build output & dependencies
+.next/
+out/
+build/
+node_modules/
+
+# Lockfiles & generated
+pnpm-lock.yaml
+next-env.d.ts
+
+# Test/coverage artifacts
+coverage/
+playwright-report/
+test-results/
