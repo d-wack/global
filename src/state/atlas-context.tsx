@@ -19,12 +19,22 @@ export interface PendingPoint {
   lat: number;
 }
 
+/** Live map center + zoom, for the instrument readout. */
+export interface MapView {
+  lng: number;
+  lat: number;
+  zoom: number;
+}
+
 type FlyToBounds = (bbox: [number, number, number, number]) => void;
 
 export interface AtlasContextValue extends UseEvents {
   /** Current map viewport, or null until the map first settles. */
   bounds: Bounds | null;
   setBounds: (bounds: Bounds) => void;
+  /** Live center/zoom, updated continuously as the map moves. */
+  view: MapView | null;
+  setView: (view: MapView) => void;
   activeCategories: Set<EventCategory>;
   toggleCategory: (category: EventCategory) => void;
   search: string;
@@ -44,6 +54,7 @@ const AtlasContext = createContext<AtlasContextValue | null>(null);
 export function AtlasProvider({ children }: { children: ReactNode }) {
   const eventsApi = useEvents();
   const [bounds, setBounds] = useState<Bounds | null>(null);
+  const [view, setView] = useState<MapView | null>(null);
   const [activeCategories, setActiveCategories] = useState<Set<EventCategory>>(
     () => new Set(EVENT_CATEGORIES),
   );
@@ -74,6 +85,8 @@ export function AtlasProvider({ children }: { children: ReactNode }) {
       ...eventsApi,
       bounds,
       setBounds,
+      view,
+      setView,
       activeCategories,
       toggleCategory,
       search,
@@ -88,6 +101,7 @@ export function AtlasProvider({ children }: { children: ReactNode }) {
     [
       eventsApi,
       bounds,
+      view,
       activeCategories,
       toggleCategory,
       search,

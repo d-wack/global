@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Global",
-  description: "Global — a Next.js application.",
+  title: "Planet Atlas",
+  description: "An explorable atlas of the world's news, events, and history.",
 };
 
 export default function RootLayout({
