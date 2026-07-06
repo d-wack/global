@@ -33,15 +33,23 @@ export default function GlobeMap() {
     if (!container) return;
     const markers = markersRef.current;
 
-    const map = new maplibregl.Map({
-      container,
-      style: BASEMAP_STYLE,
-      center: INITIAL_VIEW.center,
-      zoom: INITIAL_VIEW.zoom,
-      pitch: INITIAL_VIEW.pitch,
-      bearing: INITIAL_VIEW.bearing,
-      attributionControl: { compact: true },
-    });
+    let map: MlMap;
+    try {
+      map = new maplibregl.Map({
+        container,
+        style: BASEMAP_STYLE,
+        center: INITIAL_VIEW.center,
+        zoom: INITIAL_VIEW.zoom,
+        pitch: INITIAL_VIEW.pitch,
+        bearing: INITIAL_VIEW.bearing,
+        attributionControl: { compact: true },
+      });
+    } catch (err) {
+      // e.g. no WebGL available. The panel/search still work (bounds stay null,
+      // so the panel shows all events); just skip the map.
+      console.error("Failed to initialize the map", err);
+      return;
+    }
     mapRef.current = map;
     map.addControl(
       new maplibregl.NavigationControl({ visualizePitch: true }),
