@@ -66,8 +66,9 @@ describe("newEventSchema", () => {
     expect(
       newEventSchema.safeParse({ ...validEvent, year: -2560 }).success,
     ).toBe(true);
-    const { year: _omit, ...noYear } = validEvent;
-    expect(newEventSchema.safeParse(noYear).success).toBe(false);
+    expect(
+      newEventSchema.safeParse({ ...validEvent, year: undefined }).success,
+    ).toBe(false);
     expect(
       newEventSchema.safeParse({ ...validEvent, year: 1990.5 }).success,
     ).toBe(false);

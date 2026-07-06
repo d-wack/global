@@ -26,6 +26,9 @@ export interface MapView {
   zoom: number;
 }
 
+/** The active map tool: pan/explore, drop-an-event, or inspect-a-coordinate. */
+export type ToolId = "explore" | "add" | "inspect";
+
 type FlyToBounds = (bbox: [number, number, number, number]) => void;
 
 export interface AtlasContextValue extends UseEvents {
@@ -39,8 +42,12 @@ export interface AtlasContextValue extends UseEvents {
   toggleCategory: (category: EventCategory) => void;
   search: string;
   setSearch: (query: string) => void;
-  addMode: boolean;
-  setAddMode: (enabled: boolean) => void;
+  /** As-of year selected on the timeline; events with year > this are hidden. */
+  selectedYear: number;
+  setSelectedYear: (year: number) => void;
+  activeTool: ToolId;
+  /** Switch tool; clears transient tool state (pending add point) on change. */
+  setActiveTool: (tool: ToolId) => void;
   /** Where the user clicked in add-mode, awaiting the form; null otherwise. */
   pendingPoint: PendingPoint | null;
   setPendingPoint: (point: PendingPoint | null) => void;
@@ -59,7 +66,10 @@ export function AtlasProvider({ children }: { children: ReactNode }) {
     () => new Set(EVENT_CATEGORIES),
   );
   const [search, setSearch] = useState("");
-  const [addMode, setAddMode] = useState(false);
+  const [selectedYear, setSelectedYear] = useState(() =>
+    new Date().getFullYear(),
+  );
+  const [activeTool, setActiveToolState] = useState<ToolId>("explore");
   const [pendingPoint, setPendingPoint] = useState<PendingPoint | null>(null);
   const flyToRef = useRef<FlyToBounds | null>(null);
 
@@ -70,6 +80,12 @@ export function AtlasProvider({ children }: { children: ReactNode }) {
       else next.add(category);
       return next;
     });
+  }, []);
+
+  const setActiveTool = useCallback((tool: ToolId) => {
+    setActiveToolState(tool);
+    // Leaving the add tool discards any in-progress placement.
+    if (tool !== "add") setPendingPoint(null);
   }, []);
 
   const registerFlyTo = useCallback((fn: FlyToBounds) => {
@@ -91,8 +107,10 @@ export function AtlasProvider({ children }: { children: ReactNode }) {
       toggleCategory,
       search,
       setSearch,
-      addMode,
-      setAddMode,
+      selectedYear,
+      setSelectedYear,
+      activeTool,
+      setActiveTool,
       pendingPoint,
       setPendingPoint,
       registerFlyTo,
@@ -105,7 +123,9 @@ export function AtlasProvider({ children }: { children: ReactNode }) {
       activeCategories,
       toggleCategory,
       search,
-      addMode,
+      selectedYear,
+      activeTool,
+      setActiveTool,
       pendingPoint,
       registerFlyTo,
       flyToBounds,

@@ -77,7 +77,7 @@ export default function GlobeMap() {
     map.on("move", emitView);
     map.on("moveend", emitBounds);
     map.on("click", (e) => {
-      if (atlasRef.current.addMode) {
+      if (atlasRef.current.activeTool === "add") {
         atlasRef.current.setPendingPoint({
           lng: e.lngLat.lng,
           lat: e.lngLat.lat,
@@ -102,11 +102,14 @@ export default function GlobeMap() {
     };
   }, []);
 
-  // Reflect add-mode in the cursor.
+  // A targeting cursor while a click-tool (add / inspect) is active.
   useEffect(() => {
     const map = mapRef.current;
-    if (map) map.getCanvas().style.cursor = atlas.addMode ? "crosshair" : "";
-  }, [atlas.addMode]);
+    if (map) {
+      map.getCanvas().style.cursor =
+        atlas.activeTool === "explore" ? "" : "crosshair";
+    }
+  }, [atlas.activeTool]);
 
   // Sync markers to the current events (diff by id).
   useEffect(() => {
