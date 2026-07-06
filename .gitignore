@@ -24,6 +24,9 @@
 # production
 /build
 
+# file-backed events store (bootstrapped from src/data/seed-events.json)
+/.data/
+
 # misc
 .DS_Store
 *.pem
