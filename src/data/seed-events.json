@@ -1,0 +1,152 @@
+[
+  {
+    "id": "seed-tokyo-transit",
+    "title": "New maglev line opens between Tokyo and Nagoya",
+    "description": "The first commercial segment begins passenger service after years of tunneling delays.",
+    "category": "news",
+    "lng": 139.6917,
+    "lat": 35.6895,
+    "votes": 42,
+    "createdAt": "2026-07-05T21:30:00.000Z"
+  },
+  {
+    "id": "seed-rio-festival",
+    "title": "Winter Arts Festival takes over Rio's waterfront",
+    "description": "Open-air concerts and light installations run along Copacabana through the weekend.",
+    "category": "event",
+    "lng": -43.1729,
+    "lat": -22.9068,
+    "votes": 15,
+    "createdAt": "2026-07-04T14:00:00.000Z"
+  },
+  {
+    "id": "seed-rome-forum",
+    "title": "The Roman Forum",
+    "description": "Center of public life in ancient Rome for over a millennium; ruins of temples, basilicas, and arches remain.",
+    "category": "historical",
+    "lng": 12.4853,
+    "lat": 41.8925,
+    "votes": 88,
+    "createdAt": "2019-03-12T09:00:00.000Z"
+  },
+  {
+    "id": "seed-nyc-blackout",
+    "title": "Brief power outage hits Lower Manhattan",
+    "description": "A substation fault cut power to several blocks for about an hour during the evening rush.",
+    "category": "news",
+    "lng": -74.0,
+    "lat": 40.7128,
+    "votes": 7,
+    "createdAt": "2026-07-06T00:45:00.000Z"
+  },
+  {
+    "id": "seed-berlin-marathon",
+    "title": "Berlin summer half-marathon route announced",
+    "description": "Organizers publish a course through Mitte and the Tiergarten for next month's race.",
+    "category": "event",
+    "lng": 13.405,
+    "lat": 52.52,
+    "votes": 3,
+    "createdAt": "2026-06-28T10:15:00.000Z"
+  },
+  {
+    "id": "seed-giza-pyramids",
+    "title": "Great Pyramid of Giza",
+    "description": "The oldest of the Seven Wonders of the Ancient World and the only one largely intact.",
+    "category": "historical",
+    "lng": 31.1342,
+    "lat": 29.9792,
+    "votes": 120,
+    "createdAt": "2018-11-01T08:00:00.000Z"
+  },
+  {
+    "id": "seed-nairobi-startup",
+    "title": "Nairobi fintech hub announces expansion",
+    "description": "A cluster of payment startups plans new offices, adding hundreds of engineering jobs.",
+    "category": "news",
+    "lng": 36.8219,
+    "lat": -1.2921,
+    "votes": 19,
+    "createdAt": "2026-07-03T12:30:00.000Z"
+  },
+  {
+    "id": "seed-sydney-vivid",
+    "title": "Harbour light show returns to Sydney",
+    "description": "Projection art lights up the Opera House sails for the annual winter event.",
+    "category": "event",
+    "lng": 151.2153,
+    "lat": -33.8568,
+    "votes": 27,
+    "createdAt": "2026-07-01T09:00:00.000Z"
+  },
+  {
+    "id": "seed-athens-acropolis",
+    "title": "The Acropolis of Athens",
+    "description": "Citadel crowned by the Parthenon, symbol of classical Greece and Athenian democracy.",
+    "category": "historical",
+    "lng": 23.7257,
+    "lat": 37.9715,
+    "votes": 95,
+    "createdAt": "2020-06-20T08:00:00.000Z"
+  },
+  {
+    "id": "seed-london-protest",
+    "title": "Rally over rail fares outside Westminster",
+    "description": "Commuters gathered to protest a proposed increase; traffic was briefly diverted.",
+    "category": "news",
+    "lng": -0.1246,
+    "lat": 51.4995,
+    "votes": -4,
+    "createdAt": "2026-07-05T16:20:00.000Z"
+  },
+  {
+    "id": "seed-mumbai-monsoon",
+    "title": "Monsoon food fair opens in Mumbai",
+    "description": "Street-food stalls and cooking demos run under cover near Marine Drive.",
+    "category": "event",
+    "lng": 72.8777,
+    "lat": 19.076,
+    "votes": 11,
+    "createdAt": "2026-06-30T11:00:00.000Z"
+  },
+  {
+    "id": "seed-beijing-wall",
+    "title": "The Great Wall at Badaling",
+    "description": "The most-visited restored section of the Great Wall, north of Beijing.",
+    "category": "historical",
+    "lng": 116.0166,
+    "lat": 40.3597,
+    "votes": 73,
+    "createdAt": "2021-09-05T08:00:00.000Z"
+  },
+  {
+    "id": "seed-sf-fog",
+    "title": "Record fog blankets San Francisco Bay",
+    "description": "A dense marine layer delayed morning ferries and grounded a few flights.",
+    "category": "news",
+    "lng": -122.4194,
+    "lat": 37.7749,
+    "votes": 2,
+    "createdAt": "2026-07-06T13:10:00.000Z"
+  },
+  {
+    "id": "seed-reykjavik-aurora",
+    "title": "Aurora viewing nights begin near Reykjavik",
+    "description": "Guided evening tours resume as darker skies return to southwest Iceland.",
+    "category": "event",
+    "lng": -21.9426,
+    "lat": 64.1466,
+    "votes": 34,
+    "createdAt": "2026-07-02T22:00:00.000Z"
+  },
+  {
+    "id": "seed-mexico-teotihuacan",
+    "title": "Teotihuacan",
+    "description": "Vast pre-Columbian city with the Pyramids of the Sun and Moon, northeast of Mexico City.",
+    "category": "historical",
+    "lng": -98.8438,
+    "lat": 19.6925,
+    "votes": 61,
+    "createdAt": "2022-01-18T08:00:00.000Z"
+  }
+]
