@@ -3,41 +3,57 @@ import type { StyleSpecification } from "maplibre-gl";
 /**
  * Basemap + initial-view configuration — the single tiles seam.
  *
- * Today: CARTO "dark matter" raster tiles (keyless, dark "situation-room"
- * look). Later phases swap this constant for self-hosted vector tiles (PMTiles)
- * or a keyed provider (MapTiler) without touching the map component.
+ * Today: ESRI World Imagery satellite raster (keyless) for a photoreal
+ * "Earth from orbit" look, with a globe atmosphere. Space itself is a CSS
+ * starfield behind the (transparent) map. Later phases swap this constant for
+ * self-hosted vector tiles (PMTiles) or a keyed provider without touching the
+ * map component.
  */
 
-const CARTO_DARK_TILES = [
-  "https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
-  "https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
-  "https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+const ESRI_IMAGERY_TILES = [
+  "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
 ];
 
-const CARTO_ATTRIBUTION =
-  '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors © <a href="https://carto.com/attributions">CARTO</a>';
+const ESRI_ATTRIBUTION =
+  'Imagery © <a href="https://www.esri.com/">Esri</a>, Maxar, Earthstar Geographics, and the GIS User Community';
 
 export const BASEMAP_STYLE: StyleSpecification = {
   version: 8,
-  // Globe projection is a v5 feature; setting it in the style makes the map a
-  // 3D globe when zoomed out and flattens toward a mercator plane when zoomed in.
+  // Globe projection is a v5 feature: a 3D globe when zoomed out, flattening
+  // toward a mercator plane when zoomed in.
   projection: { type: "globe" },
   sources: {
-    carto: {
+    satellite: {
       type: "raster",
-      tiles: CARTO_DARK_TILES,
+      tiles: ESRI_IMAGERY_TILES,
       tileSize: 256,
-      attribution: CARTO_ATTRIBUTION,
+      maxzoom: 19,
+      attribution: ESRI_ATTRIBUTION,
     },
   },
-  layers: [
-    {
-      id: "background",
-      type: "background",
-      paint: { "background-color": "#000000" },
-    },
-    { id: "carto", type: "raster", source: "carto" },
-  ],
+  // No opaque background layer — the space around the globe stays transparent so
+  // the CSS starfield shows through.
+  layers: [{ id: "satellite", type: "raster", source: "satellite" }],
+  // Atmospheric halo + fade into space at the globe's edge.
+  sky: {
+    "sky-color": "#0a1330",
+    "sky-horizon-blend": 0.6,
+    "horizon-color": "#8ab4ff",
+    "horizon-fog-blend": 0.6,
+    "fog-color": "#0a1330",
+    "fog-ground-blend": 0.2,
+    "atmosphere-blend": [
+      "interpolate",
+      ["linear"],
+      ["zoom"],
+      0,
+      0.9,
+      6,
+      0.4,
+      10,
+      0,
+    ],
+  },
 };
 
 /** Where the globe starts before the user moves it. */

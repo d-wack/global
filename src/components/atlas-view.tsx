@@ -21,7 +21,7 @@ const GlobeMap = dynamic(() => import("@/components/globe/globe-map"), {
 export function AtlasView() {
   return (
     <AtlasProvider>
-      <div className="fixed inset-0 overflow-hidden bg-[#05070a]">
+      <div className="atlas-space fixed inset-0 overflow-hidden">
         <GlobeMap />
         <InstrumentReadout />
         <LeftPanel />
