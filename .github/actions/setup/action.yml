@@ -1,0 +1,20 @@
+name: Setup Node & pnpm
+description: Enable corepack, set up Node from .nvmrc with a pnpm store cache, and install dependencies.
+
+runs:
+  using: composite
+  steps:
+    # Enable corepack first so the pnpm shim exists before setup-node primes its cache.
+    - name: Enable corepack
+      shell: bash
+      run: corepack enable
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v6
+      with:
+        node-version-file: .nvmrc
+        cache: pnpm
+
+    - name: Install dependencies
+      shell: bash
+      run: pnpm install --frozen-lockfile
