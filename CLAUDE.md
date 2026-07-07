@@ -9,9 +9,10 @@ the world's news, events, and history, where zoom maps to admin scale and a left
 panel ranks "what matters here now." See `Overview.md` for the product vision and
 `Bootstrap.md` for the Phase 0 (infra) charter.
 
-Phase 1's first vertical slice is built: a MapLibre globe, a file-backed events
-store, click-to-add, voting, a viewport-ranked panel, and typed geocode search —
-all behind seams so later phases (PostGIS, GDELT) are swaps, not rewrites.
+Phase 1's first vertical slice is built: a MapLibre globe, a Postgres events
+store (Neon + PostGIS via Drizzle), click-to-add, voting, a viewport-ranked
+panel, and typed geocode search — all behind seams so later phases (GDELT
+ingestion, search) are swaps, not rewrites. It deploys to Vercel.
 
 `AGENTS.md` mirrors this file for other tools — if you change stack,
 conventions, commit/branch rules, or the check gate here, update it there too.
@@ -21,12 +22,17 @@ conventions, commit/branch rules, or the check gate here, update it there too.
 Everything phase-specific sits behind a boundary; keep it that way.
 
 - **Events repository** (`src/server/repositories/`) — `EventsRepository`
-  interface + file-backed impl (JSON at `ATLAS_DATA_DIR`, bootstrapped from
-  `src/data/seed-events.json`). Swap to PostGIS via `getEventsRepository()`.
+  interface with two impls behind `getEventsRepository()`
+  (`src/server/repositories/index.ts`): `DrizzleEventsRepository`
+  (Neon serverless Postgres + PostGIS, the default when `DATABASE_URL` is set)
+  and `FileEventsRepository` (JSON, seeded from `src/data/seed-events.json`,
+  the offline UI-only fallback). Schema + migrations live in `src/server/db/`
+  and `drizzle/`; the Drizzle client is a lazy `getDb()`/`getSql()`
+  (`src/server/db/client.ts`) so there's no build-time `DATABASE_URL` crash.
 - **Importance** (`src/lib/importance.ts`) — pure `importance(event, now)`;
   votes + recency decay now, feed/spatial terms later. Inject `now`, no I/O.
 - **Viewport filter** (`src/lib/viewport.ts`) — pure, client-side bounds/category/
-  text filters; becomes a server spatial query in Phase 2.
+  text filters; moves to server-side PostGIS spatial queries in a later phase.
 - **Basemap** (`src/config/map.ts`) — one style constant (CARTO dark → PMTiles/keyed).
 - **Geocoder** (`src/server/geocode/`) — `Geocoder` interface + Nominatim impl,
   reached only through `/api/geocode` (never the client directly).
@@ -40,7 +46,11 @@ Everything phase-specific sits behind a boundary; keep it that way.
 
 - Node.js **24** (`.nvmrc`, `engines`), pnpm via **corepack** (`packageManager`).
 - **Next.js 16**, App Router, TypeScript (strict, `noUncheckedIndexedAccess`),
-  `src/` dir, `@/*` alias, Turbopack, `output: 'standalone'`.
+  `src/` dir, `@/*` alias, Turbopack. Deploys to **Vercel** (Fluid Compute,
+  Node runtime — not edge); Vercel builds natively from source, so there's no
+  `output: 'standalone'`.
+- **Neon serverless Postgres + PostGIS** via **Drizzle** (`drizzle-orm/neon-http`);
+  `drizzle-kit` for migrations. Schema in `src/server/db/schema.ts`.
 - Tailwind CSS 4. ESLint 9 flat config (`eslint.config.mjs`) + Prettier.
 - Vitest 4 + React Testing Library + jsdom. Playwright for one e2e smoke test.
 
@@ -66,12 +76,25 @@ Everything phase-specific sits behind a boundary; keep it that way.
 - The `pre-commit` hook runs lint-staged. Keep hooks fast — slow checks
   (typecheck, tests) live in CI only.
 
+## Local dev & database
+
+- `pnpm dev` on localhost, unchanged in feel. The DB is a **Neon dev branch**:
+  run `vercel env pull .env.local` to fetch `DATABASE_URL`, then
+  `pnpm db:migrate && pnpm db:seed`. A local Docker Postgres+PostGIS is the
+  offline alternative; drop `DATABASE_URL` entirely to fall back to the file store.
+- **DB scripts** (package.json): `db:generate` (drizzle-kit generate),
+  `db:migrate` (drizzle-kit migrate), `db:seed` (tsx seed), `db:studio`.
+- **GOTCHA:** drizzle-kit and tsx do **not** auto-load `.env.local` — only Next
+  does. Source `DATABASE_URL` before the `db:*` commands, e.g.
+  `export DATABASE_URL=$(grep '^DATABASE_URL=' .env.local | cut -d= -f2- | tr -d '"')`
+  (or use `dotenv-cli`).
+
 ## Before you finish a change
 
 Run the same gate CI runs:
 
 ```bash
-pnpm lint && pnpm typecheck && pnpm test && pnpm build
+pnpm lint && pnpm typecheck && pnpm test && pnpm build && pnpm format:check
 ```
 
 Add/adjust tests alongside code: unit/component tests live next to source as
@@ -83,22 +106,25 @@ Add/adjust tests alongside code: unit/component tests live next to source as
 
 - `.github/workflows/ci.yml` — parallel lint/typecheck/test/build/e2e →
   aggregate `ci-success` (the required status check).
-- `.github/workflows/deploy.yml` — builds & pushes an image to GHCR always;
-  the SSH deploy job is **gated** behind repo variable `DEPLOY_ENABLED=true`
-  and a GitHub Environment. Leave it gated unless asked to wire up a server.
+- **Deployment is Vercel's Git integration** — no deploy workflow in the repo
+  (the old `.github/workflows/deploy.yml` was removed). Vercel builds every push
+  natively from source: preview deployments per branch/PR, production on `main`.
+  `DATABASE_URL` and the user-agent vars are Vercel environment variables.
 
 ## Gotchas
 
-- The e2e test serves the **standalone** build on an uncommon port (3210) to
-  avoid colliding with stray dev servers on :3000. Keep it self-contained.
-- `next start` warns under `output: 'standalone'` — production runs
-  `node .next/standalone/server.js` (the Dockerfile and e2e do this).
-- **Events store is ephemeral.** The file store writes to `ATLAS_DATA_DIR`
-  (default `<cwd>/.data`, gitignored). Under standalone/Docker that dir is a
-  throwaway container path — data is lost on restart. Mount a volume + set
-  `ATLAS_DATA_DIR`, or move to PostGIS, for durability. Single-process only.
+- The e2e test runs `next start` on an uncommon port (3210) to avoid colliding
+  with stray dev servers on :3000. Keep it self-contained.
+- **DB env isn't auto-loaded by tooling.** Next auto-loads `.env.local`, but
+  `drizzle-kit`/`tsx` do not — export `DATABASE_URL` before `db:migrate`/`db:seed`
+  (see "Local dev & database").
+- **Without `DATABASE_URL` the app falls back to the file store**
+  (`FileEventsRepository`), which is offline/UI-only and non-durable. The real
+  serving path is Neon Postgres; keep `DATABASE_URL` set in every real env.
+- `src/server/db/client.ts` reads `DATABASE_URL` lazily (`getDb()`/`getSql()`),
+  so a missing var never crashes the build — it surfaces at first DB use instead.
 - `next.config.ts` pins `outputFileTracingRoot`/`turbopack.root` to the project
-  so a stray parent-dir lockfile can't misplace the standalone output.
+  so a stray parent-dir lockfile can't misplace the build.
 
 ## graphify
 
