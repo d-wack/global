@@ -24,6 +24,12 @@
 # production
 /build
 
+# vercel (project link + local build artifacts; .env.local is covered by .env*)
+.vercel/
+
+# file-backed events store (offline fallback; bootstrapped from src/data/seed-events.json)
+/.data/
+
 # misc
 .DS_Store
 *.pem
@@ -44,3 +50,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# large local data dumps + generated artifacts (never commit)
+GDELT*.TXT
+GDELT-Findings.md
+/graphify-out/
+Screenshot*.png
+
+# local Claude Code settings (agent definitions ARE committed under .claude/agents/)
+.claude/settings.local.json

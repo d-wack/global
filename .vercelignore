@@ -1,0 +1,16 @@
+# Keep the Vercel upload small — exclude local artifacts and large data dumps.
+# (Vercel builds from source; these are never needed in the deployment.)
+node_modules
+.next
+.git
+.claude
+graphify-out
+GDELT*.TXT
+GDELT-Findings.md
+.data
+coverage
+test-results
+playwright-report
+e2e
+*.log
+Screenshot*.png

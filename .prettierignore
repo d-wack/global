@@ -12,3 +12,16 @@ next-env.d.ts
 coverage/
 playwright-report/
 test-results/
+
+# Generated Drizzle migrations + metadata (drizzle-kit owns formatting)
+drizzle/
+
+# Large local data + generated artifacts (untracked)
+GDELT*.TXT
+GDELT-Findings.md
+graphify-out/
+.claude/
+
+# Claude GitHub App workflows (generated on install; not hand-formatted)
+.github/workflows/claude.yml
+.github/workflows/claude-code-review.yml
