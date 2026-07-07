@@ -8,7 +8,7 @@ const event: AtlasEvent = {
   id: "e1",
   title: "Maglev line opens",
   description: "First commercial segment",
-  category: "news",
+  layerIds: ["news"],
   lng: 139.7,
   lat: 35.7,
   votes: 12,

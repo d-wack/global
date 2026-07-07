@@ -46,7 +46,7 @@ function post(body: unknown): Request {
 const validBody = {
   title: "New event",
   description: "Description",
-  category: "news",
+  layerIds: ["news"],
   lng: 10,
   lat: 20,
   year: 2026,

@@ -55,14 +55,32 @@ body {
   background-repeat: no-repeat;
 }
 
-/* Category-colored event markers on the globe (fill set inline per event). */
+/* Layer markers on the globe. The wrapper is positioned by MapLibre and stays
+   transform-free; the inner shape carries color/border/shape (fill set inline). */
 .atlas-marker {
   width: 14px;
   height: 14px;
-  border-radius: 9999px;
+  cursor: pointer;
+}
+
+.atlas-marker__shape {
+  width: 14px;
+  height: 14px;
   border: 2px solid rgba(0, 0, 0, 0.55);
   box-shadow:
     0 0 0 1px rgba(255, 255, 255, 0.25),
     0 0 8px rgba(0, 0, 0, 0.6);
-  cursor: pointer;
+}
+
+.atlas-marker__shape--circle {
+  border-radius: 9999px;
+}
+
+.atlas-marker__shape--square {
+  border-radius: 2px;
+}
+
+.atlas-marker__shape--diamond {
+  border-radius: 2px;
+  transform: rotate(45deg);
 }

@@ -63,10 +63,3 @@ export const INITIAL_VIEW = {
   pitch: 0,
   bearing: 0,
 };
-
-/** Marker fill per category — keeps the map and panel legend in sync. */
-export const CATEGORY_COLORS: Record<string, string> = {
-  news: "#38bdf8", // sky
-  event: "#a78bfa", // violet
-  historical: "#fbbf24", // amber
-};

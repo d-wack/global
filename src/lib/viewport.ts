@@ -1,11 +1,11 @@
-import type { AtlasEvent, EventCategory } from "@/types/event";
+import type { AtlasEvent } from "@/types/event";
 
 /**
  * Client-side viewport + list filtering — the spatial-query seam.
  *
  * Pure functions so the panel's ranking/filtering is testable without React or a
  * map. Phase 2 replaces {@link filterVisible} with a server-side PostGIS bbox
- * query; the category/text filters stay client-side.
+ * query; the layer/text filters stay client-side (see src/lib/layers.ts).
  */
 
 export interface Bounds {
@@ -31,14 +31,6 @@ export function filterVisible(
   bounds: Bounds,
 ): AtlasEvent[] {
   return events.filter((event) => isInBounds(event, bounds));
-}
-
-/** Keep events whose category is in the active set. An empty set shows nothing. */
-export function applyCategoryFilter(
-  events: readonly AtlasEvent[],
-  active: ReadonlySet<EventCategory>,
-): AtlasEvent[] {
-  return events.filter((event) => active.has(event.category));
 }
 
 /** Case-insensitive substring match on title or description; blank shows all. */

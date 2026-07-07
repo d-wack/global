@@ -11,7 +11,7 @@ import {
 const validEvent = {
   title: "A new event",
   description: "Something happened here",
-  category: "news",
+  layerIds: ["news"],
   lng: 12.5,
   lat: 41.9,
   year: 2026,
@@ -23,10 +23,10 @@ describe("newEventSchema", () => {
   });
 
   it("defaults a missing description to an empty string", () => {
-    const { title, category, lng, lat, year } = validEvent;
+    const { title, layerIds, lng, lat, year } = validEvent;
     const result = newEventSchema.safeParse({
       title,
-      category,
+      layerIds,
       lng,
       lat,
       year,
@@ -41,9 +41,9 @@ describe("newEventSchema", () => {
     ).toBe(false);
   });
 
-  it("rejects an unknown category", () => {
+  it("rejects an empty layerIds array", () => {
     expect(
-      newEventSchema.safeParse({ ...validEvent, category: "rumor" }).success,
+      newEventSchema.safeParse({ ...validEvent, layerIds: [] }).success,
     ).toBe(false);
   });
 

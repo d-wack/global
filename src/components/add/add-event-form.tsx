@@ -2,23 +2,15 @@
 
 import { useState, type FormEvent } from "react";
 
+import { BUILTIN_LAYERS } from "@/config/layers";
+import { cn } from "@/lib/utils";
 import type { PendingPoint } from "@/state/atlas-context";
-import {
-  EVENT_CATEGORIES,
-  type EventCategory,
-  type NewEventInput,
-} from "@/types/event";
-
-const LABELS: Record<EventCategory, string> = {
-  news: "News",
-  event: "Event",
-  historical: "Historical",
-};
+import type { NewEventInput } from "@/types/event";
 
 /**
  * Small form shown after the user clicks the map in add-mode. Presentational:
  * it composes a NewEventInput (fields + the clicked point) and hands it to
- * onSubmit; the parent performs the POST.
+ * onSubmit; the parent performs the POST. An event may belong to several layers.
  */
 export function AddEventForm({
   point,
@@ -31,13 +23,21 @@ export function AddEventForm({
 }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [category, setCategory] = useState<EventCategory>("news");
+  const [layerIds, setLayerIds] = useState<string[]>(["news"]);
   // Occurred year, defaulting to the current year (out of render, to stay pure).
   const [year, setYear] = useState(() => new Date().getFullYear());
   const [submitting, setSubmitting] = useState(false);
 
   const canSubmit =
-    title.trim().length > 0 && Number.isFinite(year) && !submitting;
+    title.trim().length > 0 &&
+    layerIds.length > 0 &&
+    Number.isFinite(year) &&
+    !submitting;
+
+  const toggleLayer = (id: string) =>
+    setLayerIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    );
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -47,7 +47,7 @@ export function AddEventForm({
       await onSubmit({
         title: title.trim(),
         description: description.trim(),
-        category,
+        layerIds,
         lng: point.lng,
         lat: point.lat,
         year,
@@ -76,18 +76,31 @@ export function AddEventForm({
         placeholder="Title"
         className={field}
       />
-      <select
-        aria-label="Category"
-        value={category}
-        onChange={(e) => setCategory(e.target.value as EventCategory)}
-        className={field}
-      >
-        {EVENT_CATEGORIES.map((c) => (
-          <option key={c} value={c} className="bg-black">
-            {LABELS[c]}
-          </option>
-        ))}
-      </select>
+      <div className="flex flex-wrap gap-1.5" role="group" aria-label="Layers">
+        {BUILTIN_LAYERS.map((layer) => {
+          const on = layerIds.includes(layer.id);
+          return (
+            <button
+              key={layer.id}
+              type="button"
+              aria-pressed={on}
+              onClick={() => toggleLayer(layer.id)}
+              className={cn(
+                "flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs",
+                on
+                  ? "border-white/20 bg-white/10 text-white"
+                  : "border-white/10 text-white/40",
+              )}
+            >
+              <span
+                className="h-2 w-2 rounded-full"
+                style={{ background: layer.color }}
+              />
+              {layer.name}
+            </button>
+          );
+        })}
+      </div>
       <input
         aria-label="Year"
         type="number"
