@@ -13,6 +13,9 @@ coverage/
 playwright-report/
 test-results/
 
+# Generated Drizzle migrations + metadata (drizzle-kit owns formatting)
+drizzle/
+
 # Large local data + generated artifacts (untracked)
 GDELT*.TXT
 GDELT-Findings.md
