@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import type { VoteDirection } from "@/types/event";
+
 import {
   isUuid,
   mapRow,
@@ -118,5 +120,64 @@ describe("voteTransition", () => {
     const switched = voteTransition(first.next, "down");
     expect(first.delta + switched.delta).toBe(-1);
     expect(switched.next).toBe("down");
+  });
+});
+
+describe("derived vote score (ledger, not a counter)", () => {
+  // These exercise the invariant the DB relies on: the displayed score is
+  // DERIVED as `base + Σ(event_votes)` (up:+1, down:-1) and voting mutates ONLY
+  // the ledger, so it cannot drift. We model the server's ledger decision purely
+  // — `voteTransition().next === null` deletes the row (toggle off), otherwise it
+  // upserts `next` (an idempotent ON CONFLICT keyed on event_id+user_id).
+  type Ledger = Map<string, VoteDirection>;
+  const derived = (base: number, ledger: Ledger): number =>
+    base +
+    [...ledger.values()].reduce((sum, d) => sum + (d === "up" ? 1 : -1), 0);
+  const press = (ledger: Ledger, user: string, direction: VoteDirection) => {
+    const existing = ledger.get(user) ?? null;
+    const { next } = voteTransition(existing, direction);
+    if (next === null) ledger.delete(user);
+    else ledger.set(user, next); // INSERT ... ON CONFLICT DO UPDATE
+  };
+
+  it("re-applying the same upsert is a no-op on the derived score", () => {
+    const ledger: Ledger = new Map();
+    press(ledger, "u1", "up");
+    const once = derived(5, ledger);
+    // A duplicate raw upsert (what a concurrent ON CONFLICT DO UPDATE resolves
+    // to) rewrites the same row, so the score is unchanged — no drift.
+    ledger.set("u1", "up");
+    expect(derived(5, ledger)).toBe(once);
+    expect(once).toBe(6);
+  });
+
+  it("collapses concurrent first-votes to a single ledger row (no double-count)", () => {
+    // Two racing requests both read existing=null and both upsert "up". The
+    // composite-PK ON CONFLICT keeps ONE row, so the score bumps by exactly 1 —
+    // the old `votes = votes + delta` path would have added 2 and drifted.
+    const ledger: Ledger = new Map();
+    const a = voteTransition(null, "up");
+    const b = voteTransition(null, "up");
+    if (a.next) ledger.set("u1", a.next);
+    if (b.next) ledger.set("u1", b.next);
+    expect(ledger.size).toBe(1);
+    expect(derived(5, ledger)).toBe(6);
+  });
+
+  it("returns the derived score to base when a vote is toggled off", () => {
+    const ledger: Ledger = new Map();
+    press(ledger, "u1", "up");
+    press(ledger, "u1", "up"); // same direction → toggle off
+    expect(ledger.has("u1")).toBe(false);
+    expect(derived(5, ledger)).toBe(5);
+  });
+
+  it("sums independent per-user votes over the shared base", () => {
+    const ledger: Ledger = new Map();
+    press(ledger, "u1", "up");
+    press(ledger, "u2", "down");
+    press(ledger, "u3", "up");
+    press(ledger, "u3", "up"); // u3 toggles off
+    expect(derived(10, ledger)).toBe(10); // +1 (u1) −1 (u2) + 0 (u3)
   });
 });

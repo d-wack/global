@@ -33,9 +33,14 @@ export function isUuid(value: string): boolean {
 /** The user's current vote on an event, or null when they haven't voted. */
 export type UserVote = VoteDirection | null;
 
-/** How a vote changes the stored tally and the user's own recorded vote. */
+/** How a vote resolves: the net-tally delta and the user's own recorded vote. */
 export interface VoteTransition {
-  /** Amount to add to `events.votes`. */
+  /**
+   * The net-tally delta this vote represents. Kept for callers reasoning about
+   * the score arithmetic (and mirrored by the client's optimistic
+   * `applyVoteToggle`). The DB no longer applies it to a counter — the score is
+   * derived — so the repository uses only `next` to pick delete-vs-upsert.
+   */
   delta: number;
   /** The user's resulting vote (null = toggled off). */
   next: UserVote;
@@ -43,14 +48,17 @@ export interface VoteTransition {
 
 /**
  * Pure one-vote-per-user transition. Given the user's existing vote and the
- * direction they just pressed, return the delta to apply to the net tally and
- * their resulting vote:
+ * direction they just pressed, return the net-tally delta and their resulting
+ * vote:
  *
  * - none + up   → +1, up     · none + down → −1, down   (first vote)
  * - up   + up   → −1, null   · down + down → +1, null   (toggle off)
  * - up   + down → −2, down   · down + up   → +2, up     (switch)
  *
- * No I/O: the repository reads the existing vote, calls this, then writes.
+ * No I/O. The repository reads the existing vote, calls this, and writes ONLY
+ * the ledger: `next === null` deletes the row (toggle off), otherwise it upserts
+ * `next`. `events.votes` is never touched — the displayed score is derived as
+ * base + ledger_sum, so it cannot drift.
  */
 export function voteTransition(
   existing: UserVote,
@@ -91,35 +99,49 @@ export function mapRow(row: EventRow): AtlasEvent {
 
 /**
  * Postgres/PostGIS-backed {@link EventsRepository} on Neon (Drizzle stack).
- * Durable and multi-instance-safe. The net tally lives on `events.votes`; the
- * `event_votes` ledger records who voted which way so votes are deduplicated and
- * toggleable. This is the store used on Vercel and (via a Neon dev branch)
- * locally when DATABASE_URL is set.
+ * Durable and multi-instance-safe. The displayed vote score is DERIVED —
+ * `events.votes` (an immutable base/seed number) plus the signed sum of the
+ * `event_votes` ledger — so voting mutates only the ledger and the score can
+ * never drift out of sync with who voted. The ledger also deduplicates and
+ * toggles per-user votes. This is the store used on Vercel and (via a Neon dev
+ * branch) locally when DATABASE_URL is set.
  */
 export class DrizzleEventsRepository implements EventsRepository {
   async list(userId?: string): Promise<AtlasEvent[]> {
     const sql = getSql();
     if (userId) {
-      // LEFT JOIN the caller's ledger row so each event carries their own vote.
+      // Derived score: immutable base (e.votes) + the ledger's signed sum. A
+      // correlated subquery totals every ledger row for the event; a separate
+      // LEFT JOIN pulls just the caller's own row for `user_vote`.
       const rows = (await sql`
         SELECT e.id, e.title, e.description, e.layer_ids,
                ST_Y(e.geom::geometry) AS lat, ST_X(e.geom::geometry) AS lng,
-               e.year, e.votes, e.created_by, e.created_at,
-               ev.direction AS user_vote
+               e.year,
+               e.votes + COALESCE((
+                 SELECT SUM(CASE ev.direction WHEN 'up' THEN 1 ELSE -1 END)
+                 FROM event_votes ev WHERE ev.event_id = e.id
+               ), 0) AS votes,
+               e.created_by, e.created_at,
+               uv.direction AS user_vote
         FROM events e
-        LEFT JOIN event_votes ev
-          ON ev.event_id = e.id AND ev.user_id = ${userId}
+        LEFT JOIN event_votes uv
+          ON uv.event_id = e.id AND uv.user_id = ${userId}
         ORDER BY e.created_at DESC
       `) as EventRow[];
       return rows.map(mapRow);
     }
     const rows = (await sql`
-      SELECT id, title, description, layer_ids,
-             ST_Y(geom::geometry) AS lat, ST_X(geom::geometry) AS lng,
-             year, votes, created_by, created_at,
+      SELECT e.id, e.title, e.description, e.layer_ids,
+             ST_Y(e.geom::geometry) AS lat, ST_X(e.geom::geometry) AS lng,
+             e.year,
+             e.votes + COALESCE((
+               SELECT SUM(CASE ev.direction WHEN 'up' THEN 1 ELSE -1 END)
+               FROM event_votes ev WHERE ev.event_id = e.id
+             ), 0) AS votes,
+             e.created_by, e.created_at,
              NULL AS user_vote
-      FROM events
-      ORDER BY created_at DESC
+      FROM events e
+      ORDER BY e.created_at DESC
     `) as EventRow[];
     return rows.map(mapRow);
   }
@@ -154,45 +176,62 @@ export class DrizzleEventsRepository implements EventsRepository {
     const uid = userId ?? ANONYMOUS;
     const sql = getSql();
 
-    // neon-http has no multi-statement transaction, so this is a read-then-write:
-    // read the caller's current vote, compute the transition, then update the
-    // tally and the ledger. The composite PK (event_id, user_id) guards against
-    // duplicate inserts under a race; the counter update runs first so an unknown
-    // id returns null without ever touching the ledger (and without an FK error).
+    // The score is DERIVED (base + ledger_sum), so it cannot drift: this method
+    // mutates ONLY the `event_votes` ledger, never `events.votes`. neon-http has
+    // no multi-statement transaction, but that's fine here because there is only
+    // one write and it is idempotent under a race.
+    //
+    // Verify the event exists first — the ledger's FK to events.id would raise on
+    // an upsert for an unknown id, and an unknown id must return null, not error.
+    const eventRows = (await sql`
+      SELECT id FROM events WHERE id = ${id}
+    `) as { id: string }[];
+    if (!eventRows[0]) return null;
+
+    // Read the caller's current ledger row and decide the mutation purely: same
+    // direction → toggle the vote off (delete); otherwise upsert it.
     const existingRows = (await sql`
       SELECT direction FROM event_votes
       WHERE event_id = ${id} AND user_id = ${uid}
     `) as { direction: VoteDirection }[];
     const existing = existingRows[0]?.direction ?? null;
-    const { delta, next } = voteTransition(existing, direction);
-
-    const rows = (await sql`
-      UPDATE events SET votes = votes + ${delta}
-      WHERE id = ${id}
-      RETURNING id, title, description, layer_ids,
-                ST_Y(geom::geometry) AS lat, ST_X(geom::geometry) AS lng,
-                year, votes, created_by, created_at
-    `) as EventRow[];
-    const row = rows[0];
-    if (!row) return null;
+    const { next } = voteTransition(existing, direction);
 
     if (next === null) {
       await sql`
         DELETE FROM event_votes
         WHERE event_id = ${id} AND user_id = ${uid}
       `;
-    } else if (existing === null) {
+    } else {
+      // Idempotent upsert: two concurrent same-user INSERTs collapse to one row
+      // via the composite PK instead of the second raising a duplicate-key 500.
       await sql`
         INSERT INTO event_votes (event_id, user_id, direction)
         VALUES (${id}, ${uid}, ${next})
-      `;
-    } else {
-      await sql`
-        UPDATE event_votes SET direction = ${next}
-        WHERE event_id = ${id} AND user_id = ${uid}
+        ON CONFLICT (event_id, user_id)
+        DO UPDATE SET direction = EXCLUDED.direction, created_at = now()
       `;
     }
 
-    return mapRow({ ...row, user_vote: next });
+    // Re-read the event with the same derived-score select as `list`, scoped to
+    // this user so `user_vote` reflects the ledger we just wrote.
+    const rows = (await sql`
+      SELECT e.id, e.title, e.description, e.layer_ids,
+             ST_Y(e.geom::geometry) AS lat, ST_X(e.geom::geometry) AS lng,
+             e.year,
+             e.votes + COALESCE((
+               SELECT SUM(CASE ev.direction WHEN 'up' THEN 1 ELSE -1 END)
+               FROM event_votes ev WHERE ev.event_id = e.id
+             ), 0) AS votes,
+             e.created_by, e.created_at,
+             uv.direction AS user_vote
+      FROM events e
+      LEFT JOIN event_votes uv
+        ON uv.event_id = e.id AND uv.user_id = ${uid}
+      WHERE e.id = ${id}
+    `) as EventRow[];
+    const row = rows[0];
+    if (!row) return null;
+    return mapRow(row);
   }
 }

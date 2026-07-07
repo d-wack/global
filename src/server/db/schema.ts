@@ -32,6 +32,10 @@ export const events = pgTable(
     layerIds: text("layer_ids").array().notNull(),
     geom: geographyPoint("geom").notNull(),
     year: integer("year").notNull(),
+    // Immutable BASE score (the seed's starting number). The displayed vote
+    // total is DERIVED — `votes + Σ(event_votes)` — so it can never drift out of
+    // sync with the ledger. The vote endpoint mutates only `event_votes`, never
+    // this column. New rows start at 0, so their score is purely the ledger sum.
     votes: integer("votes").notNull().default(0),
     // Auth0 `sub` of the creator; nullable for anonymous / pre-auth rows.
     // Attribution only — never a source of authorization truth.
@@ -51,10 +55,12 @@ export const events = pgTable(
 );
 
 /**
- * One-vote-per-user ledger. The net tally still lives on `events.votes` (fast to
- * read and preserves seeded counts); this table records *who* voted which way so
- * a vote can be toggled/switched and de-duplicated. The composite PK
- * (event_id, user_id) is what enforces "one vote per user per event".
+ * One-vote-per-user ledger — the sole source of vote truth. The displayed score
+ * is derived as `events.votes` (immutable base/seed) plus this table's signed sum
+ * (up:+1, down:-1); nothing mutates a counter, so the two can't drift. This table
+ * records *who* voted which way so a vote can be toggled/switched and
+ * de-duplicated. The composite PK (event_id, user_id) enforces "one vote per user
+ * per event" and lets the vote endpoint upsert idempotently under a race.
  */
 export const eventVotes = pgTable(
   "event_votes",
