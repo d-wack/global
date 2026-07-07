@@ -52,3 +52,7 @@ next-env.d.ts
 GDELT*.TXT
 GDELT-Findings.md
 /graphify-out/
+Screenshot*.png
+
+# local Claude Code settings (agent definitions ARE committed under .claude/agents/)
+.claude/settings.local.json
