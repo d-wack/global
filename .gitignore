@@ -24,6 +24,9 @@
 # production
 /build
 
+# file-backed events store (bootstrapped from src/data/seed-events.json)
+/.data/
+
 # misc
 .DS_Store
 *.pem
@@ -44,3 +47,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# large local data dumps + generated artifacts (never commit)
+GDELT*.TXT
+GDELT-Findings.md
+/graphify-out/
