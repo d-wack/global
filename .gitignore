@@ -24,7 +24,10 @@
 # production
 /build
 
-# file-backed events store (bootstrapped from src/data/seed-events.json)
+# vercel (project link + local build artifacts; .env.local is covered by .env*)
+.vercel/
+
+# file-backed events store (offline fallback; bootstrapped from src/data/seed-events.json)
 /.data/
 
 # misc
