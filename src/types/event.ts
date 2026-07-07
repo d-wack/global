@@ -25,6 +25,17 @@ export interface AtlasEvent {
   year: number;
   /** ISO-8601 timestamp of creation (record time; drives importance recency). */
   createdAt: string;
+  /**
+   * Auth0 `sub` of the user who created the event, or null for anonymous /
+   * legacy rows. Attribution only; never trusted for authorization.
+   */
+  createdBy?: string | null;
+  /**
+   * The requesting user's own vote on this event (`"up"`/`"down"`), or null when
+   * they haven't voted or the request is anonymous. Powers one-vote-per-user
+   * toggling in the UI. Derived per-request; not stored on the event itself.
+   */
+  userVote?: VoteDirection | null;
 }
 
 /** The fields a client supplies when adding an event; the server assigns the rest. */
