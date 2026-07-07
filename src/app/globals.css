@@ -55,6 +55,12 @@ body {
   background-repeat: no-repeat;
 }
 
+/* Zoom control (top-left): shift it clear of the left events panel so it stays
+   visible in the upper-left rather than hiding behind the panel. */
+.maplibregl-ctrl-top-left {
+  left: 21rem !important;
+}
+
 /* Layer markers on the globe. The wrapper is positioned by MapLibre and stays
    transform-free; the inner shape carries color/border/shape (fill set inline). */
 .atlas-marker {

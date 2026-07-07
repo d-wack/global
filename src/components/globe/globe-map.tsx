@@ -73,13 +73,14 @@ export default function GlobeMap() {
       return;
     }
     mapRef.current = map;
+    // Zoom control top-left (above the left panel); attribution stays bottom-right.
     map.addControl(
       new maplibregl.NavigationControl({ visualizePitch: true }),
-      "top-right",
+      "top-left",
     );
     map.addControl(
       new maplibregl.AttributionControl({ compact: true }),
-      "top-right",
+      "bottom-right",
     );
 
     const emitView = () => {
