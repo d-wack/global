@@ -19,6 +19,7 @@ ranks "what matters here now."
 - **Tests:** Vitest 4 + React Testing Library (jsdom) · one Playwright e2e smoke test.
 
 ### Architecture in one screen
+
 Everything phase-specific sits behind a seam, so swaps aren't rewrites:
 
 - **Events store** — `EventsRepository` interface (`src/server/repositories/`). Factory
@@ -36,11 +37,11 @@ Everything phase-specific sits behind a seam, so swaps aren't rewrites:
 
 ## 2. Environments
 
-| Environment    | Trigger                    | URL                                   | Database                              |
-| -------------- | -------------------------- | ------------------------------------- | ------------------------------------- |
-| **Local**      | `pnpm dev`                 | `localhost:3000`                      | Neon dev branch (or file fallback)    |
-| **Preview**    | any PR / pushed branch     | `global-<hash>-…​.vercel.app` (login) | Neon (env-injected)                   |
-| **Production** | merge to **`main`**        | `global-jade-tau.vercel.app` (public) | Neon (env-injected)                   |
+| Environment    | Trigger                | URL                                   | Database                           |
+| -------------- | ---------------------- | ------------------------------------- | ---------------------------------- |
+| **Local**      | `pnpm dev`             | `localhost:3000`                      | Neon dev branch (or file fallback) |
+| **Preview**    | any PR / pushed branch | `global-<hash>-…​.vercel.app` (login) | Neon (env-injected)                |
+| **Production** | merge to **`main`**    | `global-jade-tau.vercel.app` (public) | Neon (env-injected)                |
 
 Preview URLs require a Vercel login to view (`ssoProtection`); production is public.
 
@@ -70,10 +71,12 @@ Preview URLs require a Vercel login to view (`ssoProtection`); production is pub
   authorizes the Vercel deploy (see §5).
 
 ### Doing a release
+
 1. Open a `develop → main` PR. 2. Wait for `ci-success`. 3. Merge it. 4. Vercel deploys
-production automatically; watch it reach `READY`, then smoke-test the live site.
+   production automatically; watch it reach `READY`, then smoke-test the live site.
 
 ### Manual / one-off deploys (rare — `vercel-engineer`)
+
 `vercel deploy` (preview) for a one-off; `vercel --prod` **only** when explicitly asked.
 Rollback by promoting a previous deployment (`vercel promote <url>`) or reverting the merge.
 
@@ -104,7 +107,7 @@ Vercel team member. This repo's git author is set to **`d-wack`**
 commits authorize.
 
 - **Symptom:** a deployment shows **`BLOCKED`** / the PR's **Vercel** check fails with
-  *"Git author … must have access to the project"* or *"Deployment was blocked."*
+  _"Git author … must have access to the project"_ or _"Deployment was blocked."_
 - **Cause:** the commit's author isn't a Vercel member (e.g. a different GitHub identity).
 - **Fix:** author commits as `d-wack`, or add that identity to the Vercel team. **Do not**
   disable Git Fork Protection to work around it.
@@ -116,12 +119,12 @@ commits authorize.
 Neon Postgres + PostGIS. Migrations are **run manually against the target Neon branch** (they
 are not part of CD).
 
-| Script          | Does                                          |
-| --------------- | --------------------------------------------- |
-| `pnpm db:generate` | drizzle-kit generate (diff schema → SQL)   |
-| `pnpm db:migrate`  | apply pending migrations                    |
-| `pnpm db:seed`     | idempotent seed of the demo events          |
-| `pnpm db:studio`   | Drizzle Studio                              |
+| Script             | Does                                     |
+| ------------------ | ---------------------------------------- |
+| `pnpm db:generate` | drizzle-kit generate (diff schema → SQL) |
+| `pnpm db:migrate`  | apply pending migrations                 |
+| `pnpm db:seed`     | idempotent seed of the demo events       |
+| `pnpm db:studio`   | Drizzle Studio                           |
 
 **Gotcha:** drizzle-kit and tsx do **not** auto-load `.env.local` — only Next does. Source the
 connection first, and use the **unpooled** URL for DDL:

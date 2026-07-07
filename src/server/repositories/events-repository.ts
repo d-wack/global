@@ -9,10 +9,27 @@ import type { AtlasEvent, NewEventInput, VoteDirection } from "@/types/event";
  * is I/O-shaped (Promise-returning) and store-agnostic.
  */
 export interface EventsRepository {
-  /** All events. Viewport/admin filtering is done client-side in Phase 1. */
-  list(): Promise<AtlasEvent[]>;
-  /** Create an event; the store assigns id, votes (0), and createdAt. */
-  add(input: NewEventInput): Promise<AtlasEvent>;
-  /** Apply a vote; returns the updated event, or null if the id is unknown. */
-  vote(id: string, direction: VoteDirection): Promise<AtlasEvent | null>;
+  /**
+   * All events. Viewport/admin filtering is done client-side in Phase 1.
+   * When `userId` is given, each event's `userVote` reflects that user's own
+   * vote (else null). `userId` is optional so pre-auth callers still compile.
+   */
+  list(userId?: string): Promise<AtlasEvent[]>;
+  /**
+   * Create an event; the store assigns id, votes (0), and createdAt. `userId`
+   * (Auth0 `sub`) is recorded as the event's `createdBy` attribution, or null
+   * when absent.
+   */
+  add(input: NewEventInput, userId?: string): Promise<AtlasEvent>;
+  /**
+   * Apply a vote for `userId` (one vote per user, toggling): a repeat vote in
+   * the same direction clears it, the opposite direction switches it. Returns
+   * the updated event (with new `votes` and resulting `userVote`), or null if
+   * the id is unknown. Anonymous callers share the "anonymous" bucket.
+   */
+  vote(
+    id: string,
+    direction: VoteDirection,
+    userId?: string,
+  ): Promise<AtlasEvent | null>;
 }

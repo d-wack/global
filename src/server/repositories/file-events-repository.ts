@@ -28,11 +28,16 @@ export class FileEventsRepository implements EventsRepository {
 
   constructor(private readonly filePath: string = EVENTS_FILE) {}
 
+  // This offline stand-in is intentionally degraded relative to the seam: it
+  // records `createdBy` for attribution (via add's `userId`) but treats votes as
+  // a shared net tally with no per-user dedup/toggle — that lives in the Postgres
+  // store. `userVote` is therefore always null. `list`/`vote` omit the optional
+  // `userId` param (structurally still satisfy EventsRepository) since it's unused.
   async list(): Promise<AtlasEvent[]> {
     return this.read();
   }
 
-  async add(input: NewEventInput): Promise<AtlasEvent> {
+  async add(input: NewEventInput, userId?: string): Promise<AtlasEvent> {
     return this.mutate((events) => {
       const event: AtlasEvent = {
         id: randomUUID(),
@@ -43,7 +48,9 @@ export class FileEventsRepository implements EventsRepository {
         lat: input.lat,
         year: input.year,
         votes: 0,
+        createdBy: userId ?? null,
         createdAt: new Date().toISOString(),
+        userVote: null,
       };
       return { next: [...events, event], result: event };
     });
@@ -57,6 +64,7 @@ export class FileEventsRepository implements EventsRepository {
       const updated: AtlasEvent = {
         ...current,
         votes: current.votes + (direction === "up" ? 1 : -1),
+        userVote: null,
       };
       const next = [...events];
       next[index] = updated;

@@ -1,9 +1,19 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import type { SessionUser } from "@/server/auth/session";
 import type { AtlasEvent, VoteDirection } from "@/types/event";
 
 const state = vi.hoisted(() => ({
   events: [] as AtlasEvent[],
+}));
+
+// Controllable session; defaults to open mode (anonymous user).
+const session = vi.hoisted(() => ({
+  user: { userId: undefined } as SessionUser,
+}));
+
+vi.mock("@/server/auth/session", () => ({
+  getSessionUser: async () => session.user,
 }));
 
 vi.mock("@/server/repositories", () => ({
@@ -48,9 +58,21 @@ function voteRequest(direction: string): Request {
 
 beforeEach(() => {
   state.events = [makeEvent("e1", 5)];
+  session.user = { userId: undefined };
 });
 
 describe("POST /api/events/[id]/vote", () => {
+  it("returns 401 when the session is unauthorized (auth on, no login)", async () => {
+    session.user = "unauthorized";
+    const res = await POST(voteRequest("up"), {
+      params: Promise.resolve({ id: "e1" }),
+    });
+    expect(res.status).toBe(401);
+    expect((await res.json()).error).toBe("Unauthorized");
+    // The event's tally is untouched by a rejected vote.
+    expect(state.events[0]?.votes).toBe(5);
+  });
+
   it("increments votes on an up-vote", async () => {
     const res = await POST(voteRequest("up"), {
       params: Promise.resolve({ id: "e1" }),

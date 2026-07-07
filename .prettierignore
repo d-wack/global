@@ -22,6 +22,9 @@ GDELT-Findings.md
 graphify-out/
 .claude/
 
+# Auth0 quickstart reference (untracked MDX/JSX — not ours to format)
+auth0.md
+
 # Claude GitHub App workflows (generated on install; not hand-formatted)
 .github/workflows/claude.yml
 .github/workflows/claude-code-review.yml

@@ -1,3 +1,4 @@
+import { Auth0Provider } from "@auth0/nextjs-auth0";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
@@ -27,7 +28,11 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="flex min-h-full flex-col">{children}</body>
+      <body className="flex min-h-full flex-col">
+        {/* Client provider for useUser(). Safe in open mode: with Auth0
+            unconfigured there is no session, so useUser() yields no user. */}
+        <Auth0Provider>{children}</Auth0Provider>
+      </body>
     </html>
   );
 }
