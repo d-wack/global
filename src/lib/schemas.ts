@@ -1,7 +1,5 @@
 import { z } from "zod";
 
-import { EVENT_CATEGORIES } from "@/types/event";
-
 /**
  * Zod schemas for all API input. Route handlers validate against these before
  * touching the repository, so the store only ever sees well-formed, in-range
@@ -11,9 +9,11 @@ import { EVENT_CATEGORIES } from "@/types/event";
 export const newEventSchema = z.object({
   title: z.string().trim().min(1, "Title is required").max(120),
   description: z.string().trim().max(1000).default(""),
-  category: z.enum(EVENT_CATEGORIES),
+  layerIds: z.array(z.string()).min(1, "Pick at least one layer"),
   lng: z.number().min(-180).max(180),
   lat: z.number().min(-90).max(90),
+  // Occurred year (negative = BCE). Required: the store never sees a yearless event.
+  year: z.number().int().min(-4000).max(3000),
 });
 
 export const voteSchema = z.object({
@@ -22,6 +22,12 @@ export const voteSchema = z.object({
 
 export const geocodeQuerySchema = z.object({
   q: z.string().trim().min(1, "Query is required").max(200),
+});
+
+// Query params arrive as strings, so coerce lat/lng to numbers before validating.
+export const placeInfoQuerySchema = z.object({
+  lat: z.coerce.number().min(-90).max(90),
+  lng: z.coerce.number().min(-180).max(180),
 });
 
 export type NewEventBody = z.infer<typeof newEventSchema>;

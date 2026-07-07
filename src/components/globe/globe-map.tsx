@@ -5,8 +5,29 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import maplibregl, { type Map as MlMap, type Marker } from "maplibre-gl";
 import { useEffect, useRef } from "react";
 
-import { BASEMAP_STYLE, CATEGORY_COLORS, INITIAL_VIEW } from "@/config/map";
+import { BASEMAP_STYLE, INITIAL_VIEW } from "@/config/map";
+import { applyLayerFilter, resolveMarkerStyle } from "@/lib/layers";
+import { filterAsOf } from "@/lib/timeline";
 import { useAtlas } from "@/state/atlas-context";
+import type { MarkerShape } from "@/types/layer";
+
+/**
+ * Style a marker's inner shape element. The wrapper (positioned by MapLibre)
+ * stays transform-free so the diamond's rotation can't fight MapLibre's
+ * translate. `sig` (shape|color) is cached on the wrapper to skip redundant work.
+ */
+function styleMarker(
+  el: HTMLElement,
+  shape: MarkerShape,
+  color: string,
+  sig: string,
+): void {
+  const inner = el.firstElementChild as HTMLElement | null;
+  if (!inner) return;
+  inner.className = `atlas-marker__shape atlas-marker__shape--${shape}`;
+  inner.style.background = color;
+  el.dataset.sig = sig;
+}
 
 /**
  * The MapLibre globe. Loaded via next/dynamic with `ssr: false`, so this module
@@ -42,7 +63,8 @@ export default function GlobeMap() {
         zoom: INITIAL_VIEW.zoom,
         pitch: INITIAL_VIEW.pitch,
         bearing: INITIAL_VIEW.bearing,
-        attributionControl: { compact: true },
+        // Add attribution ourselves (top-right) so the bottom timeline can't hide it.
+        attributionControl: false,
       });
     } catch (err) {
       // e.g. no WebGL available. The panel/search still work (bounds stay null,
@@ -51,8 +73,13 @@ export default function GlobeMap() {
       return;
     }
     mapRef.current = map;
+    // Zoom control top-left (above the left panel); attribution stays bottom-right.
     map.addControl(
       new maplibregl.NavigationControl({ visualizePitch: true }),
+      "top-left",
+    );
+    map.addControl(
+      new maplibregl.AttributionControl({ compact: true }),
       "bottom-right",
     );
 
@@ -77,11 +104,14 @@ export default function GlobeMap() {
     map.on("move", emitView);
     map.on("moveend", emitBounds);
     map.on("click", (e) => {
-      if (atlasRef.current.addMode) {
+      const tool = atlasRef.current.activeTool;
+      if (tool === "add") {
         atlasRef.current.setPendingPoint({
           lng: e.lngLat.lng,
           lat: e.lngLat.lat,
         });
+      } else if (tool === "inspect") {
+        void atlasRef.current.inspectAt(e.lngLat.lat, e.lngLat.lng);
       }
     });
 
@@ -102,25 +132,45 @@ export default function GlobeMap() {
     };
   }, []);
 
-  // Reflect add-mode in the cursor.
+  // A targeting cursor while a click-tool (add / inspect) is active.
   useEffect(() => {
     const map = mapRef.current;
-    if (map) map.getCanvas().style.cursor = atlas.addMode ? "crosshair" : "";
-  }, [atlas.addMode]);
+    if (map) {
+      map.getCanvas().style.cursor =
+        atlas.activeTool === "explore" ? "" : "crosshair";
+    }
+  }, [atlas.activeTool]);
 
-  // Sync markers to the current events (diff by id).
+  // Sync markers to the events visible at the selected year AND active layers
+  // (diff by id; restyle in place when an event's winning layer changes).
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
     const markers = markersRef.current;
     const seen = new Set<string>();
 
-    for (const event of atlas.events) {
+    const visible = applyLayerFilter(
+      filterAsOf(atlas.events, atlas.selectedYear),
+      atlas.activeLayerIds,
+    );
+
+    for (const event of visible) {
       seen.add(event.id);
-      if (markers.has(event.id)) continue;
+      const style = resolveMarkerStyle(event, atlas.activeLayerIds);
+      const sig = `${style.shape}|${style.color}`;
+
+      const existing = markers.get(event.id);
+      if (existing) {
+        const el = existing.getElement();
+        if (el.dataset.sig !== sig)
+          styleMarker(el, style.shape, style.color, sig);
+        continue;
+      }
+
       const el = document.createElement("div");
       el.className = "atlas-marker";
-      el.style.background = CATEGORY_COLORS[event.category] ?? "#38bdf8";
+      el.appendChild(document.createElement("div"));
+      styleMarker(el, style.shape, style.color, sig);
       const marker = new maplibregl.Marker({ element: el })
         .setLngLat([event.lng, event.lat])
         .setPopup(new maplibregl.Popup({ offset: 12 }).setText(event.title))
@@ -134,7 +184,7 @@ export default function GlobeMap() {
         markers.delete(id);
       }
     }
-  }, [atlas.events]);
+  }, [atlas.events, atlas.selectedYear, atlas.activeLayerIds]);
 
   // Size with h-full/w-full, not `absolute inset-0`: maplibre-gl.css forces
   // `position: relative` on its container, which cancels inset-based stretching

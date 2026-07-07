@@ -16,10 +16,11 @@ function makeEvent(overrides: Partial<AtlasEvent> = {}): AtlasEvent {
     id: "e1",
     title: "Test",
     description: "",
-    category: "news",
+    layerIds: ["news"],
     lng: 0,
     lat: 0,
     votes: 0,
+    year: 2026,
     createdAt: new Date(NOW).toISOString(),
     ...overrides,
   };

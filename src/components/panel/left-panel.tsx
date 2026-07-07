@@ -3,27 +3,24 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { rankByImportance } from "@/lib/importance";
-import {
-  applyCategoryFilter,
-  filterVisible,
-  searchFilter,
-} from "@/lib/viewport";
+import { applyLayerFilter } from "@/lib/layers";
+import { filterAsOf } from "@/lib/timeline";
+import { filterVisible, searchFilter } from "@/lib/viewport";
 import { useAtlas } from "@/state/atlas-context";
 
-import { CategoryFilter } from "./category-filter";
 import { EventListItem } from "./event-list-item";
 
 /**
  * The viewport-ranked panel: what matters at the current zoom/level right now.
- * Filters events to the viewport (client-side), then by category and search,
- * then ranks by importance. Derivations are pure and memoized.
+ * Filters events to the viewport (client-side), then by layer and search, then
+ * ranks by importance. Derivations are pure and memoized.
  */
 export function LeftPanel() {
   const {
     events,
     bounds,
-    activeCategories,
-    toggleCategory,
+    selectedYear,
+    activeLayerIds,
     search,
     setSearch,
     voteEvent,
@@ -38,22 +35,22 @@ export function LeftPanel() {
     return () => clearInterval(id);
   }, []);
 
-  const inView = useMemo(
-    () => (bounds ? filterVisible(events, bounds) : events),
-    [events, bounds],
-  );
+  const inView = useMemo(() => {
+    const asOf = filterAsOf(events, selectedYear);
+    return bounds ? filterVisible(asOf, bounds) : asOf;
+  }, [events, bounds, selectedYear]);
 
   const ranked = useMemo(
     () =>
       rankByImportance(
-        searchFilter(applyCategoryFilter(inView, activeCategories), search),
+        searchFilter(applyLayerFilter(inView, activeLayerIds), search),
         now,
       ),
-    [inView, activeCategories, search, now],
+    [inView, activeLayerIds, search, now],
   );
 
   return (
-    <aside className="absolute top-0 left-0 z-10 flex h-full w-80 max-w-[85vw] flex-col border-r border-white/10 bg-black/75 backdrop-blur">
+    <aside className="absolute top-0 bottom-14 left-0 z-10 flex w-80 max-w-[85vw] flex-col border-r border-white/10 bg-black/75 backdrop-blur">
       <div className="space-y-2 border-b border-white/10 p-3">
         <input
           type="search"
@@ -63,7 +60,6 @@ export function LeftPanel() {
           aria-label="Search events"
           className="w-full rounded-md border border-white/10 bg-white/5 px-2.5 py-1.5 text-sm text-white outline-none placeholder:text-white/30 focus:border-emerald-400/40"
         />
-        <CategoryFilter active={activeCategories} onToggle={toggleCategory} />
         <p className="font-mono text-[11px] text-emerald-300/70">
           {inView.length} event{inView.length === 1 ? "" : "s"} in view
         </p>

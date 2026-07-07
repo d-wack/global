@@ -1,8 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import type { AtlasEvent, EventCategory } from "@/types/event";
+import type { AtlasEvent } from "@/types/event";
 import {
-  applyCategoryFilter,
   filterVisible,
   isInBounds,
   searchFilter,
@@ -14,10 +13,11 @@ function evt(overrides: Partial<AtlasEvent> = {}): AtlasEvent {
     id: "e",
     title: "Title",
     description: "Description",
-    category: "news",
+    layerIds: ["news"],
     lng: 0,
     lat: 0,
     votes: 0,
+    year: 2026,
     createdAt: "2026-07-06T00:00:00.000Z",
     ...overrides,
   };
@@ -47,25 +47,6 @@ describe("filterVisible", () => {
   it("keeps only in-bounds events", () => {
     const events = [evt({ id: "in", lng: 1 }), evt({ id: "out", lng: 100 })];
     expect(filterVisible(events, world).map((e) => e.id)).toEqual(["in"]);
-  });
-});
-
-describe("applyCategoryFilter", () => {
-  it("keeps events in the active set", () => {
-    const events = [
-      evt({ id: "n", category: "news" }),
-      evt({ id: "e", category: "event" }),
-      evt({ id: "h", category: "historical" }),
-    ];
-    const active = new Set<EventCategory>(["news", "historical"]);
-    expect(applyCategoryFilter(events, active).map((e) => e.id)).toEqual([
-      "n",
-      "h",
-    ]);
-  });
-
-  it("returns nothing for an empty active set", () => {
-    expect(applyCategoryFilter([evt()], new Set()).length).toBe(0);
   });
 });
 

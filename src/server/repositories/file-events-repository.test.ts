@@ -13,9 +13,10 @@ let file: string;
 const sample: NewEventInput = {
   title: "Test event",
   description: "A description",
-  category: "news",
+  layerIds: ["news"],
   lng: 12.5,
   lat: 41.9,
+  year: 2026,
 };
 
 beforeEach(async () => {

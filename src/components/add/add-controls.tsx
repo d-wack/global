@@ -1,39 +1,25 @@
 "use client";
 
-import { cn } from "@/lib/utils";
 import { useAtlas } from "@/state/atlas-context";
 
 import { AddEventForm } from "./add-event-form";
 
 /**
- * Connects add-mode + click-to-place to the context: a toggle button and, once
- * the user clicks the map, the {@link AddEventForm}.
+ * Click-to-place for the add tool: a hint while armed, then the
+ * {@link AddEventForm} once the user clicks the map. Tool selection lives in the
+ * ToolBar.
  */
 export function AddControls() {
-  const { addMode, setAddMode, pendingPoint, setPendingPoint, addEvent } =
+  const { activeTool, pendingPoint, setPendingPoint, setActiveTool, addEvent } =
     useAtlas();
-
-  const toggle = () => {
-    const next = !addMode;
-    setAddMode(next);
-    if (!next) setPendingPoint(null);
-  };
 
   return (
     <>
-      <button
-        type="button"
-        onClick={toggle}
-        aria-pressed={addMode}
-        className={cn(
-          "absolute bottom-4 left-1/2 z-20 -translate-x-1/2 rounded-full px-4 py-2 text-sm font-medium shadow-lg transition-colors",
-          addMode
-            ? "bg-emerald-400 text-black"
-            : "bg-white/10 text-white backdrop-blur hover:bg-white/20",
-        )}
-      >
-        {addMode ? "Click the map to place…" : "+ Add event"}
-      </button>
+      {activeTool === "add" && !pendingPoint && (
+        <p className="pointer-events-none absolute bottom-28 left-1/2 z-30 -translate-x-1/2 rounded-full bg-black/70 px-3 py-1 text-xs text-white/80 backdrop-blur">
+          Click the map to place an event
+        </p>
+      )}
 
       {pendingPoint && (
         <AddEventForm
@@ -43,7 +29,7 @@ export function AddControls() {
             const created = await addEvent(input);
             if (created) {
               setPendingPoint(null);
-              setAddMode(false);
+              setActiveTool("explore");
             }
           }}
         />
