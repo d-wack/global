@@ -98,36 +98,36 @@ These three carry different trust levels; the importance/quality layer must reco
 
 **Data & services**
 
-- Phase 1: a file-backed store behind a repository interface (stand-in for the database).
-- Phase 2+: PostGIS for spatial storage and server-side bounding-box / admin queries.
+- Now: **Neon serverless Postgres + PostGIS** via Drizzle (`drizzle-orm/neon-http`) behind the `EventsRepository` interface; a file-backed store remains as an offline, UI-only fallback when `DATABASE_URL` is unset.
+- Phase 2+: push spatial/temporal/layer filtering into PostGIS (server-side bounding-box / admin queries) behind the same seam.
 - ElevenLabs Scribe v2 for speech-to-text; Nominatim for geocoding — both server-side, both behind provider interfaces.
 - All secrets server-side only; all API input validated with zod.
 
 **Infrastructure & delivery**
 
-- GitHub for source + CI/CD; branch-protected `main` (prod) and `develop` (staging), PR-gated with required checks.
-- Docker images built in CI, pushed to GHCR; deployed by SSH to a self-hosted Hostinger VPS via Docker Compose behind a Caddy reverse proxy (auto-TLS). Deploy is gated until the VPS is provisioned.
+- GitHub for source + CI (`ci.yml`: lint/typecheck/test/build/e2e → `ci-success`); branch-protected `main` (prod) and `develop` (staging), PR-gated with required checks.
+- **Deployed on Vercel** (Fluid Compute, Node runtime), which builds natively from source. Vercel's Git integration provides CD: preview deployments per branch/PR, production on `main`. The database is **Neon Postgres** (PostGIS), with `DATABASE_URL` and geocoder user-agent vars set per Vercel environment.
 - Local dev machine as the working environment; optional future move to a self-hosted git server (Forgejo) and a team of committing agents, each with its own identity, working through PRs and required CI.
 
 ## 9. Architectural principles & seams
 
 Everything phase-specific is isolated behind a boundary so later phases are **swaps, not rewrites**:
 
-- **Events repository** — file store → PostGIS.
+- **Events repository** — file store → Neon Postgres/PostGIS (swapped; file store kept as offline fallback).
 - **Importance function** — pure and isolated; votes+recency now, feed-significance blend later.
 - **Viewport filtering** — client-side bounds filter now → server-side spatial query later.
 - **Basemap tiles** — one config constant; CARTO → PMTiles/MapTiler later.
 - **STT provider** — ElevenLabs → Web Speech API or other, behind an interface.
 - **Geocoder** — Nominatim → keyed/self-hosted, behind an interface.
-- **Deploy** — build-and-push always; server deploy gated by a flag until infra is ready.
+- **Deploy** — Vercel Git integration (preview per branch/PR, production on `main`); no in-repo deploy workflow.
 
 Guiding rules: server-side keys only, typed boundaries (zod), small scoped commits, CI green before merge, and documentation (`README`, `CLAUDE.md`) kept current so agent sessions inherit context.
 
 ## 10. Roadmap (directional, not fixed)
 
 - **Phase 0 — Foundation.** Repo, tooling, CI/CD pipeline (green from day one), gated CD, branch protection. _In progress._
-- **Phase 1 — Explorable globe.** Interactive globe, click-to-add events, voting, viewport-ranked panel, voice + typed location search, file persistence. _First vertical slice delivered:_ globe, file-backed store, click-to-add, voting, ranked panel, and typed geocode search. Remaining: voice (ElevenLabs Scribe) search.
-- **Phase 2 — Real data spine.** PostGIS behind the repository seam, server-side spatial/bbox queries, admin-boundary tagging, first GDELT ingest, real importance blend.
+- **Phase 1 — Explorable globe.** Interactive globe, click-to-add events, voting, viewport-ranked panel, voice + typed location search, persistence. _First vertical slice delivered:_ globe, Neon Postgres/PostGIS store (via Drizzle) behind the repository seam, click-to-add, voting, ranked panel, and typed geocode search; deployed on Vercel. Remaining: voice (ElevenLabs Scribe) search.
+- **Phase 2 — Real data spine.** Server-side spatial/bbox/temporal queries pushed into PostGIS behind the repository seam (the store is already Postgres), admin-boundary tagging, first GDELT ingest, real importance blend.
 - **Phase 3 — Depth.** Wikidata historical layer, richer ranking and themes/categories, self-hosted vector tiles, keyed geocoding, marker clustering (e.g. H3) for density.
 - **Phase 4 — Community.** Wiki-style editing, voting at scale, trust/reputation, moderation and spam handling, accounts.
 - **Later / optional.** Self-hosted git + agent team, TTS spoken confirmations, performance and scale work.
@@ -137,7 +137,7 @@ Guiding rules: server-side keys only, typed boundaries (zod), small scoped commi
 - **Data quality** — dedup, circular reporting, and source trust in GDELT will make or break credibility.
 - **Ranking design** — the importance function is the core product bet and will need constant iteration.
 - **Moderation & liability** — a crowd-sourced record of real events and people carries real content-moderation weight; schema should anticipate it (status, soft-delete) before it's needed.
-- **Single-VPS load** — SSR + PostGIS + CI + reverse proxy contending on one box; plan to separate concerns as load grows.
+- **Managed-service limits & cost** — Vercel Fluid Compute (function duration, cold starts on the DB path) and Neon (connection/compute ceilings on serverless Postgres) set the scaling envelope; watch usage as feed ingestion grows.
 - **Tile & geocoder limits** — free tiers (CARTO, Nominatim) have usage limits; production wants self-hosted or keyed providers.
 
 ## 12. Out of scope (for now)
@@ -146,7 +146,7 @@ Auth/accounts, moderation tooling, real-time updates, native mobile apps, TTS co
 
 ## 13. Using this with plan mode
 
-- **Decided:** the stack (Next.js 16 / TypeScript / MapLibre v5 / PostGIS-later), GitHub CI/CD with dev/prod, the seam-based architecture, and the phase ordering.
+- **Decided:** the stack (Next.js 16 / TypeScript / MapLibre v5 / Neon Postgres + PostGIS via Drizzle, deployed on Vercel), GitHub CI + Vercel CD with dev/prod, the seam-based architecture, and the phase ordering.
 - **Open (room to plan):** the name, the specifics of the importance-ranking formula, the moderation/trust model, the exact GDELT ingestion and dedup strategy, the tile/geocoder production choices, and the agent-team workflow details.
 
 Plan against the decided items; propose options for the open ones.

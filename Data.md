@@ -6,14 +6,20 @@ Update this as decisions are made.
 
 ## Where we are today
 
-- **Store:** a JSON file (`src/data/seed-events.json` seeds it; runtime writes to
-  `ATLAS_DATA_DIR`, default `<cwd>/.data`) behind the **`EventsRepository`** seam
-  (`src/server/repositories/`). Single-process, no concurrency beyond an in-process
-  mutex. Fine for the prototype; not durable under standalone/Docker.
-- **All filtering is client-side** today: viewport (`filterVisible`), time
+- **Store:** **Neon serverless Postgres + PostGIS**, accessed via **Drizzle**
+  (`drizzle-orm/neon-http`), behind the **`EventsRepository`** seam
+  (`src/server/repositories/`). The factory (`src/server/repositories/index.ts`)
+  selects `DrizzleEventsRepository` when `DATABASE_URL` is set (all Vercel envs +
+  a local Neon dev branch) and otherwise falls back to `FileEventsRepository`
+  (JSON, seeded from `src/data/seed-events.json`) for offline, UI-only work.
+  Schema + migrations live in `src/server/db/schema.ts` and `drizzle/`; the app
+  runs on **Vercel** (Fluid Compute, Node runtime). This is the durable serving
+  path — the file store is a fallback, not the primary store.
+- **Filtering is still client-side** today: viewport (`filterVisible`), time
   (`filterAsOf`), layers (`applyLayerFilter`), and text (`searchFilter`) run in the
-  browser over the full event list. This is the seam that a database/search backend
-  replaces.
+  browser over the full event list. Pushing these into PostGIS (bbox, time-range,
+  and layer SQL) is the next step behind the same seam — the store moved to
+  Postgres before the queries did.
 
 ## Domain schema
 
@@ -35,18 +41,49 @@ Update this as decisions are made.
 - Built-ins (News/Events/Historical) live in code so marker styling works against an
   empty store. User-created, persisted layers come later (see roadmap).
 
+## Postgres schema (current)
+
+The physical `events` table (`src/server/db/schema.ts`; first migration in
+`drizzle/` enables PostGIS):
+
+| Column        | Type                    | Notes                                     |
+| ------------- | ----------------------- | ----------------------------------------- |
+| `id`          | `uuid` (pk)             | primary key                               |
+| `title`       | `text`                  |                                           |
+| `description` | `text`                  |                                           |
+| `layer_ids`   | `text[]`                | GIN index (many-to-many layer membership) |
+| `geom`        | `geography(Point,4326)` | GiST index (spatial queries)              |
+| `year`        | `integer`               | btree index (negative = BCE)              |
+| `votes`       | `integer`               | net community score                       |
+| `created_at`  | `timestamptz`           | btree index (desc); importance recency    |
+
+`geom` replaces the domain model's `lng`/`lat` pair at the storage layer; the
+`AtlasEvent` type the client sees is unchanged (the repository maps between them).
+
+### Local dev database
+
+Local dev uses a **Neon dev branch**. Pull its `DATABASE_URL`
+(`vercel env pull .env.local`), then run `pnpm db:migrate && pnpm db:seed`.
+**Gotcha:** `drizzle-kit`/`tsx` do not auto-load `.env.local` (only Next does),
+so export `DATABASE_URL` before the `db:*` scripts. A local Docker Postgres+PostGIS
+is the offline alternative; dropping `DATABASE_URL` falls back to the file store.
+DB scripts: `db:generate`, `db:migrate`, `db:seed`, `db:studio`.
+
 ## Target architecture
 
 The prototype's client-side filtering doesn't survive scale (GDELT alone is millions
 of geo-coded events refreshed every ~15 min). The plan separates **storage**,
 **serving**, and **search**, each behind the existing seams.
 
-### Serving — PostGIS (interactive map queries)
+### Serving — Neon Postgres + PostGIS (interactive map queries) — in place
 
-The primary interactive store. Handles the three things the map does constantly:
-**spatial** (bbox / radius), **temporal** (as-of / range), and **layer membership**
-filtering, server-side. Drops in behind `EventsRepository`, replacing client-side
-`filterVisible`/`filterAsOf`. This is the already-planned Phase 2 "data spine."
+The primary interactive store, **already live** (Neon + PostGIS via Drizzle on
+Vercel; see "Where we are today"). It can handle the three things the map does
+constantly, server-side: **spatial** (bbox / radius, via the `geom` GiST index),
+**temporal** (as-of / range, via `year`/`created_at`), and **layer membership**
+(via the `layer_ids` GIN index). Remaining work is moving `filterVisible`/
+`filterAsOf`/`applyLayerFilter` off the client and into SQL behind
+`EventsRepository` — the store is done, the query pushdown is next.
 
 ### Search — Meilisearch (instant text + facets)
 
@@ -87,8 +124,9 @@ sources (GDELT ~15min, Wikidata, user-generated)
 
 ## Phased migration
 
-1. File repo → **PostGIS** (drop-in behind `EventsRepository`; move `filterVisible`/
-   `filterAsOf` server-side as bbox + time-range SQL).
+1. File repo → **Neon Postgres + PostGIS** (drop-in behind `EventsRepository`).
+   _Done — the store is Postgres._ Remaining: move `filterVisible`/`filterAsOf`/
+   `applyLayerFilter` server-side as bbox + time-range + layer SQL.
 2. Add **Meilisearch**; move `searchFilter` + facets server-side.
 3. Stand up the **Iceberg** lake + the GDELT/Wikidata ingestion pipeline; materialize
    cleaned events into PostGIS + Meilisearch.

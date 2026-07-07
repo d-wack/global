@@ -17,15 +17,10 @@ export default defineConfig({
     trace: "on-first-retry",
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
-  // Build, then serve the standalone output — the exact artifact the Docker
-  // image runs. next build does not copy static assets into standalone, so we
-  // stage them the same way the Dockerfile does before starting the server.
+  // Build, then serve with `next start` (Vercel builds natively — no standalone).
+  // next start honors the PORT/HOSTNAME env vars set below.
   webServer: {
-    command:
-      "pnpm build" +
-      " && cp -r public .next/standalone/public" +
-      " && cp -r .next/static .next/standalone/.next/static" +
-      " && node .next/standalone/server.js",
+    command: "pnpm build && pnpm start",
     url: baseURL,
     reuseExistingServer: !isCI,
     timeout: 120_000,
