@@ -18,8 +18,16 @@ Lean on the installed `vercel:*` skills instead of guessing — invoke the right
 
 ## How to run the CLI
 - Authenticate non-interactively with the token in the gitignored `.env`: `vercel --token "$VERCEL_TOKEN" <cmd>` (source it: `set -a; . ./.env; set +a`). **Never echo, log, or print `VERCEL_TOKEN` or any secret / connection string** (`DATABASE_URL`, etc.).
-- Deploys default to **preview**. **Never deploy to production** (`vercel --prod` / `deploy prod`) unless the caller explicitly asks for production.
+- **Routine CD is automatic** (see the pipeline below) — you rarely run `vercel deploy` by hand. A manual one-off defaults to **preview**; **never** `vercel --prod` unless the caller explicitly asks.
 - Keep secrets in **Vercel env** (and gitignored `.env`/`.env.local`), never in the repo. Confirm `.env*` (except `.env.example`) and `.vercel/` are gitignored before any commit.
+
+## CI/CD pipeline (steady state)
+
+- **Deploys are Vercel's native Git integration** — connected to `d-wack/global`, **production branch = `main`**. Merging to `main` auto-deploys **production**; every PR/branch gets a **preview** deploy. There is no deploy workflow in the repo (CD is Vercel's, not GitHub Actions').
+- **Branch flow:** `feature/*` / `fix/*` / `chore/*` → PR into **`develop`** → PR from `develop` into **`main`**. CI (`.github/workflows/ci.yml` → `ci-success`) gates PRs; **the human merges PRs** (solo project — don't bypass protection).
+- **Author access:** Vercel only deploys commits whose Git author is linked to the Vercel team. If deploys fail with *"Git author … must have access to the project"*, the fix is in Vercel (link the GitHub login to the account / add it to the team) — a dashboard step: **flag it, don't work around it**.
+- **Env** (`DATABASE_URL`, `NOMINATIM_USER_AGENT`, `WIKIPEDIA_USER_AGENT`) lives in **Vercel project env** (the Neon integration set `DATABASE_URL` for all environments). Sync locally with `vercel env pull .env.local`.
+- Your CLI role is **management, not routine CD**: env changes, `vercel logs` / `inspect`, promoting or rolling back a deployment, one-off previews, cron/firewall config. Production ships by merging to `main`.
 
 ## Project context
 - Next.js 16 App Router; **pnpm**; Node 24. Vercel builds natively — there is **no** Dockerfile/standalone (removed). Env needed: `DATABASE_URL` (Neon), `NOMINATIM_USER_AGENT`, `WIKIPEDIA_USER_AGENT`.
