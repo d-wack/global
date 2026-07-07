@@ -6,6 +6,31 @@ import type { AtlasEvent, NewEventInput, VoteDirection } from "@/types/event";
 
 const JSON_HEADERS = { "Content-Type": "application/json" };
 
+/**
+ * Optimistically apply one-vote-per-user toggling to an event: voting the same
+ * direction again clears the vote, the opposite direction switches it, and a
+ * fresh vote adds it — adjusting `votes` and `userVote` in step. The server's
+ * returned event remains authoritative and reconciles any drift.
+ */
+export function applyVoteToggle(
+  event: AtlasEvent,
+  direction: VoteDirection,
+): AtlasEvent {
+  const step = direction === "up" ? 1 : -1;
+  const current = event.userVote ?? null;
+
+  if (current === direction) {
+    // Toggle off: remove this vote.
+    return { ...event, votes: event.votes - step, userVote: null };
+  }
+  if (current === null) {
+    // Fresh vote.
+    return { ...event, votes: event.votes + step, userVote: direction };
+  }
+  // Switch sides: undo the opposite vote and add this one (net 2 * step).
+  return { ...event, votes: event.votes + 2 * step, userVote: direction };
+}
+
 export interface UseEvents {
   events: AtlasEvent[];
   loading: boolean;
@@ -60,13 +85,17 @@ export function useEvents(): UseEvents {
 
   const voteEvent = useCallback(
     async (id: string, direction: VoteDirection) => {
-      const delta = direction === "up" ? 1 : -1;
-      const apply = (d: number) =>
-        setEvents((prev) =>
-          prev.map((e) => (e.id === id ? { ...e, votes: e.votes + d } : e)),
-        );
+      // Optimistically reflect the toggle, capturing the pre-vote row so we can
+      // roll back on failure. The server is authoritative and reconciles below.
+      let previous: AtlasEvent | undefined;
+      setEvents((prev) =>
+        prev.map((e) => {
+          if (e.id !== id) return e;
+          previous = e;
+          return applyVoteToggle(e, direction);
+        }),
+      );
 
-      apply(delta); // optimistic
       try {
         const res = await fetch(`/api/events/${id}/vote`, {
           method: "POST",
@@ -77,7 +106,10 @@ export function useEvents(): UseEvents {
         const { event } = (await res.json()) as { event: AtlasEvent };
         setEvents((prev) => prev.map((e) => (e.id === event.id ? event : e)));
       } catch {
-        apply(-delta); // roll back
+        const restore = previous;
+        if (restore) {
+          setEvents((prev) => prev.map((e) => (e.id === id ? restore : e)));
+        }
       }
     },
     [],

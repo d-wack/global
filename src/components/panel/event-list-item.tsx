@@ -20,7 +20,11 @@ export function EventListItem({
 
   return (
     <li className="flex gap-3 border-b border-white/5 px-3 py-2.5">
-      <VoteControls votes={event.votes} onVote={onVote} />
+      <VoteControls
+        votes={event.votes}
+        userVote={event.userVote}
+        onVote={onVote}
+      />
       <div className="min-w-0">
         <div className="flex items-center gap-1.5">
           <span

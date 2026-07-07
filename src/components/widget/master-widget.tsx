@@ -6,6 +6,7 @@ import { LayerChooser } from "@/components/panel/layer-chooser";
 import { BUILTIN_LAYERS } from "@/config/layers";
 import { useAtlas } from "@/state/atlas-context";
 
+import { AccountChip } from "./account-chip";
 import { CollapsibleSection } from "./collapsible-section";
 import { TimeControl } from "./time-control";
 
@@ -57,6 +58,9 @@ export function MasterWidget() {
           onChange={setSelectedYear}
         />
       </CollapsibleSection>
+
+      {/* Renders nothing in open mode / when logged out. */}
+      <AccountChip />
     </div>
   );
 }
