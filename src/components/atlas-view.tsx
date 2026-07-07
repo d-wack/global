@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 
 import { AddControls } from "@/components/add/add-controls";
+import { YearDisplay } from "@/components/hud/year-display";
 import { PlaceInfoPanel } from "@/components/inspect/place-info-panel";
 import { LeftPanel } from "@/components/panel/left-panel";
 import { GeocodeSearch } from "@/components/search/geocode-search";
@@ -32,6 +33,7 @@ export function AtlasView() {
         <ToolBar />
         <AddControls />
         <PlaceInfoPanel />
+        <YearDisplay />
         <TimelineScrubber />
       </div>
     </AtlasProvider>
