@@ -73,11 +73,10 @@ export default function GlobeMap() {
       return;
     }
     mapRef.current = map;
-    // Bottom-right: the master widget owns the top-right; the timeline is inset
-    // on the right to leave this corner clear.
+    // Zoom control top-left (above the left panel); attribution stays bottom-right.
     map.addControl(
       new maplibregl.NavigationControl({ visualizePitch: true }),
-      "bottom-right",
+      "top-left",
     );
     map.addControl(
       new maplibregl.AttributionControl({ compact: true }),
