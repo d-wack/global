@@ -102,7 +102,7 @@ Add/adjust tests alongside code: unit/component tests live next to source as
 `pnpm test <path-or-name-pattern>` (e.g. `pnpm test utils`) or watch with
 `pnpm test:watch`; one e2e spec with `pnpm test:e2e atlas.spec.ts`.
 
-## CI/CD (see README for detail)
+## CI/CD (full pipeline: `docs/DEPLOYMENT.md`)
 
 - `.github/workflows/ci.yml` — parallel lint/typecheck/test/build/e2e →
   aggregate `ci-success` (the required status check).

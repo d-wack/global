@@ -24,4 +24,40 @@ describe("VoteControls", () => {
     expect(screen.getByLabelText("Vote up")).toBeDisabled();
     expect(screen.getByLabelText("Vote down")).toBeDisabled();
   });
+
+  it("marks neither button active without a userVote", () => {
+    render(<VoteControls votes={0} onVote={() => {}} />);
+    expect(screen.getByLabelText("Vote up")).toHaveAttribute(
+      "aria-pressed",
+      "false",
+    );
+    expect(screen.getByLabelText("Vote down")).toHaveAttribute(
+      "aria-pressed",
+      "false",
+    );
+  });
+
+  it("highlights the up button when the user voted up", () => {
+    render(<VoteControls votes={1} onVote={() => {}} userVote="up" />);
+    expect(screen.getByLabelText("Vote up")).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    expect(screen.getByLabelText("Vote down")).toHaveAttribute(
+      "aria-pressed",
+      "false",
+    );
+  });
+
+  it("highlights the down button when the user voted down", () => {
+    render(<VoteControls votes={-1} onVote={() => {}} userVote="down" />);
+    expect(screen.getByLabelText("Vote down")).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    expect(screen.getByLabelText("Vote up")).toHaveAttribute(
+      "aria-pressed",
+      "false",
+    );
+  });
 });
