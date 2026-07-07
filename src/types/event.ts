@@ -7,17 +7,14 @@
  * provenance, and moderation status; keep those additive.
  */
 
-export const EVENT_CATEGORIES = ["news", "event", "historical"] as const;
-
-export type EventCategory = (typeof EVENT_CATEGORIES)[number];
-
 export type VoteDirection = "up" | "down";
 
 export interface AtlasEvent {
   id: string;
   title: string;
   description: string;
-  category: EventCategory;
+  /** Layers this event belongs to (many-to-many). At least one; see config/layers.ts. */
+  layerIds: string[];
   /** Longitude, decimal degrees, -180..180. */
   lng: number;
   /** Latitude, decimal degrees, -90..90. */
@@ -33,5 +30,5 @@ export interface AtlasEvent {
 /** The fields a client supplies when adding an event; the server assigns the rest. */
 export type NewEventInput = Pick<
   AtlasEvent,
-  "title" | "description" | "category" | "lng" | "lat" | "year"
+  "title" | "description" | "layerIds" | "lng" | "lat" | "year"
 >;

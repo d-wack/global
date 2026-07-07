@@ -10,10 +10,10 @@ import {
   type ReactNode,
 } from "react";
 
+import { BUILTIN_LAYERS } from "@/config/layers";
 import { useEvents, type UseEvents } from "@/hooks/use-events";
 import { usePlaceInfo, type UsePlaceInfo } from "@/hooks/use-place-info";
 import type { Bounds } from "@/lib/viewport";
-import { EVENT_CATEGORIES, type EventCategory } from "@/types/event";
 
 export interface PendingPoint {
   lng: number;
@@ -39,8 +39,9 @@ export interface AtlasContextValue extends UseEvents, UsePlaceInfo {
   /** Live center/zoom, updated continuously as the map moves. */
   view: MapView | null;
   setView: (view: MapView) => void;
-  activeCategories: Set<EventCategory>;
-  toggleCategory: (category: EventCategory) => void;
+  /** Ids of layers currently shown; an event displays if any of its layers is here. */
+  activeLayerIds: Set<string>;
+  toggleLayer: (layerId: string) => void;
   search: string;
   setSearch: (query: string) => void;
   /** As-of year selected on the timeline; events with year > this are hidden. */
@@ -64,8 +65,9 @@ export function AtlasProvider({ children }: { children: ReactNode }) {
   const placeInfoApi = usePlaceInfo();
   const [bounds, setBounds] = useState<Bounds | null>(null);
   const [view, setView] = useState<MapView | null>(null);
-  const [activeCategories, setActiveCategories] = useState<Set<EventCategory>>(
-    () => new Set(EVENT_CATEGORIES),
+  const [activeLayerIds, setActiveLayerIds] = useState<Set<string>>(
+    () =>
+      new Set(BUILTIN_LAYERS.filter((l) => l.defaultVisible).map((l) => l.id)),
   );
   const [search, setSearch] = useState("");
   const [selectedYear, setSelectedYear] = useState(() =>
@@ -75,11 +77,11 @@ export function AtlasProvider({ children }: { children: ReactNode }) {
   const [pendingPoint, setPendingPoint] = useState<PendingPoint | null>(null);
   const flyToRef = useRef<FlyToBounds | null>(null);
 
-  const toggleCategory = useCallback((category: EventCategory) => {
-    setActiveCategories((prev) => {
+  const toggleLayer = useCallback((layerId: string) => {
+    setActiveLayerIds((prev) => {
       const next = new Set(prev);
-      if (next.has(category)) next.delete(category);
-      else next.add(category);
+      if (next.has(layerId)) next.delete(layerId);
+      else next.add(layerId);
       return next;
     });
   }, []);
@@ -111,8 +113,8 @@ export function AtlasProvider({ children }: { children: ReactNode }) {
       setBounds,
       view,
       setView,
-      activeCategories,
-      toggleCategory,
+      activeLayerIds,
+      toggleLayer,
       search,
       setSearch,
       selectedYear,
@@ -129,8 +131,8 @@ export function AtlasProvider({ children }: { children: ReactNode }) {
       placeInfoApi,
       bounds,
       view,
-      activeCategories,
-      toggleCategory,
+      activeLayerIds,
+      toggleLayer,
       search,
       selectedYear,
       activeTool,

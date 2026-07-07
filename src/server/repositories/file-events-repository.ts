@@ -38,7 +38,7 @@ export class FileEventsRepository implements EventsRepository {
         id: randomUUID(),
         title: input.title,
         description: input.description,
-        category: input.category,
+        layerIds: input.layerIds,
         lng: input.lng,
         lat: input.lat,
         year: input.year,

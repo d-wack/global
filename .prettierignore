@@ -12,3 +12,9 @@ next-env.d.ts
 coverage/
 playwright-report/
 test-results/
+
+# Large local data + generated artifacts (untracked)
+GDELT*.TXT
+GDELT-Findings.md
+graphify-out/
+.claude/

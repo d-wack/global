@@ -30,7 +30,7 @@ function makeEvent(id: string, votes = 0): AtlasEvent {
     id,
     title: "T",
     description: "",
-    category: "news",
+    layerIds: ["news"],
     lng: 0,
     lat: 0,
     votes,

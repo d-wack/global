@@ -80,7 +80,7 @@ export function TimelineScrubber() {
   const atPresent = selectedYear >= maxYear;
 
   return (
-    <div className="absolute inset-x-0 bottom-0 z-40 flex h-14 items-center gap-4 border-t border-white/10 bg-black/80 px-4 backdrop-blur">
+    <div className="absolute right-16 bottom-0 left-0 z-40 flex h-14 items-center gap-4 border-t border-white/10 bg-black/80 px-4 backdrop-blur">
       <div className="w-40 shrink-0 font-mono text-xs text-emerald-300">
         <span className="text-emerald-400/60">AS OF </span>
         {formatYear(selectedYear)}

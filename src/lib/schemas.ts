@@ -1,7 +1,5 @@
 import { z } from "zod";
 
-import { EVENT_CATEGORIES } from "@/types/event";
-
 /**
  * Zod schemas for all API input. Route handlers validate against these before
  * touching the repository, so the store only ever sees well-formed, in-range
@@ -11,7 +9,7 @@ import { EVENT_CATEGORIES } from "@/types/event";
 export const newEventSchema = z.object({
   title: z.string().trim().min(1, "Title is required").max(120),
   description: z.string().trim().max(1000).default(""),
-  category: z.enum(EVENT_CATEGORIES),
+  layerIds: z.array(z.string()).min(1, "Pick at least one layer"),
   lng: z.number().min(-180).max(180),
   lat: z.number().min(-90).max(90),
   // Occurred year (negative = BCE). Required: the store never sees a yearless event.

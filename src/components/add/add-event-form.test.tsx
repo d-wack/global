@@ -32,9 +32,8 @@ describe("AddEventForm", () => {
     fireEvent.change(screen.getByLabelText("Description"), {
       target: { value: "Details" },
     });
-    fireEvent.change(screen.getByLabelText("Category"), {
-      target: { value: "event" },
-    });
+    // Default layer is News; add Events for a multi-layer event.
+    fireEvent.click(screen.getByRole("button", { name: /Events/ }));
     fireEvent.change(screen.getByLabelText("Year"), {
       target: { value: "1995" },
     });
@@ -43,7 +42,7 @@ describe("AddEventForm", () => {
     expect(onSubmit).toHaveBeenCalledWith({
       title: "New thing",
       description: "Details",
-      category: "event",
+      layerIds: ["news", "event"],
       lng: 2.35,
       lat: 48.85,
       year: 1995,

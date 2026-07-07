@@ -16,7 +16,7 @@ function evt(year: number, id = String(year)): AtlasEvent {
     id,
     title: id,
     description: "",
-    category: "historical",
+    layerIds: ["historical"],
     lng: 0,
     lat: 0,
     votes: 0,
