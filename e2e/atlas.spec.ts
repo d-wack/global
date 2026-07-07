@@ -8,7 +8,7 @@ test("atlas shell renders the panel, readout, and controls", async ({
 }) => {
   await page.goto("/");
 
-  // Instrument readout.
+  // Master widget header.
   await expect(page.getByText("PLANET ATLAS")).toBeVisible();
 
   // Viewport-ranked panel: live count + a high-importance seeded event.
@@ -17,14 +17,15 @@ test("atlas shell renders the panel, readout, and controls", async ({
     page.getByRole("heading", { name: "Great Pyramid of Giza" }),
   ).toBeVisible();
 
-  // Category filter toggles.
+  // Layer toggles (in the master widget).
   const news = page.getByRole("button", { name: "News", exact: true });
   await expect(news).toHaveAttribute("aria-pressed", "true");
   await news.click();
   await expect(news).toHaveAttribute("aria-pressed", "false");
 
-  // Both search inputs and the add control are present.
+  // Search inputs and the toolbar tools are present.
   await expect(page.getByLabel("Search events")).toBeVisible();
   await expect(page.getByLabel("Search for a place")).toBeVisible();
-  await expect(page.getByRole("button", { name: "+ Add event" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Explore" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Inspect" })).toBeVisible();
 });
