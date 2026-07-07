@@ -73,13 +73,15 @@ export default function GlobeMap() {
       return;
     }
     mapRef.current = map;
+    // Bottom-right: the master widget owns the top-right; the timeline is inset
+    // on the right to leave this corner clear.
     map.addControl(
       new maplibregl.NavigationControl({ visualizePitch: true }),
-      "top-right",
+      "bottom-right",
     );
     map.addControl(
       new maplibregl.AttributionControl({ compact: true }),
-      "top-right",
+      "bottom-right",
     );
 
     const emitView = () => {

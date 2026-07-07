@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-import { BUILTIN_LAYERS } from "@/config/layers";
 import { rankByImportance } from "@/lib/importance";
 import { applyLayerFilter } from "@/lib/layers";
 import { filterAsOf } from "@/lib/timeline";
@@ -10,7 +9,6 @@ import { filterVisible, searchFilter } from "@/lib/viewport";
 import { useAtlas } from "@/state/atlas-context";
 
 import { EventListItem } from "./event-list-item";
-import { LayerChooser } from "./layer-chooser";
 
 /**
  * The viewport-ranked panel: what matters at the current zoom/level right now.
@@ -23,7 +21,6 @@ export function LeftPanel() {
     bounds,
     selectedYear,
     activeLayerIds,
-    toggleLayer,
     search,
     setSearch,
     voteEvent,
@@ -62,11 +59,6 @@ export function LeftPanel() {
           placeholder="Search events…"
           aria-label="Search events"
           className="w-full rounded-md border border-white/10 bg-white/5 px-2.5 py-1.5 text-sm text-white outline-none placeholder:text-white/30 focus:border-emerald-400/40"
-        />
-        <LayerChooser
-          layers={BUILTIN_LAYERS}
-          active={activeLayerIds}
-          onToggle={toggleLayer}
         />
         <p className="font-mono text-[11px] text-emerald-300/70">
           {inView.length} event{inView.length === 1 ? "" : "s"} in view
