@@ -45,6 +45,12 @@ Everything phase-specific sits behind a boundary; keep it that way.
   `next/dynamic` `ssr:false`; markers are managed imperatively.
 - All API input is zod-validated (`src/lib/schemas.ts`); fs/geocoder code is
   server-only.
+- **Auth (Auth0)** — the app is **private**. `src/proxy.ts` gates the whole app
+  (anonymous page → `/auth/login`, anonymous `/api/*` → 401; **no-op in "open mode"**
+  when Auth0 is unconfigured, **503 fail-closed in production**). `src/lib/auth0.ts` +
+  `src/server/auth/session.ts` (`getSessionUser()`) derive the user server-side; events
+  store `created_by` (the Auth0 `sub`), and voting is one-per-user (`event_votes`, with a
+  **derived** score). Full detail in `docs/DEPLOYMENT.md` → Authentication.
 
 ## Stack (do not swap without being asked)
 
@@ -54,7 +60,9 @@ Everything phase-specific sits behind a boundary; keep it that way.
   Node runtime — not edge); Vercel builds natively from source, so there's no
   `output: 'standalone'`.
 - **Neon serverless Postgres + PostGIS** via **Drizzle** (`drizzle-orm/neon-http`);
-  `drizzle-kit` for migrations. Schema in `src/server/db/schema.ts`.
+  `drizzle-kit` for migrations. Schema in `src/server/db/schema.ts`. **Migrations are NOT
+  in CD** — run `pnpm db:migrate` against Neon before promoting schema changes to `main`.
+- **Auth0** (`@auth0/nextjs-auth0` v4) — private app, login required; SDK routes at `/auth/*`.
 - Tailwind CSS 4. ESLint 9 flat config (`eslint.config.mjs`) + Prettier.
 - Vitest 4 + React Testing Library + jsdom. Playwright for one e2e smoke test.
 

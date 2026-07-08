@@ -26,3 +26,10 @@ You are the **data engineer** for Planet Atlas. You own the data architecture an
 - Current feature branch; never push `main`/`develop`. Never commit `GDELT*.TXT` (gitignored) or secrets.
 - Flag when a change needs API wiring (backend-engineer) or UI (frontend-engineer).
 - Return a summary: what changed, the data mapping/decisions, and verification results.
+
+## Lessons (from shipped work)
+
+- **Migrations are NOT part of CD.** Vercel deploys code, not schema — run `pnpm db:migrate` against Neon **before** the code that needs a new table/column ships, or production 500s (this bit us: an unapplied `event_votes`/`created_by` migration emptied the live globe).
+- **drizzle-kit / tsx don't auto-load `.env.local`** — export the connection first, and use the **UNPOOLED** URL for DDL: `export DATABASE_URL=$(grep '^DATABASE_URL_UNPOOLED=' .env.local | cut -d= -f2- | tr -d '"')`.
+- **neon-http has no multi-statement transactions** — never do non-atomic read-then-write counter updates (they drift). **Derive** aggregates from a ledger (e.g. `votes = base + Σ(event_votes)`) or use a single idempotent upsert (`ON CONFLICT DO UPDATE`).
+- **Keep interface changes backward-compatible** (optional new params) so dependent routes/tests keep compiling during incremental, multi-agent work.

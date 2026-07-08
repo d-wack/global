@@ -25,3 +25,9 @@ You are the **frontend engineer** for Planet Atlas — a Next.js 16 map app (an 
 - Never commit secrets, the large `GDELT*.TXT`, or `.claude/settings.local.json`.
 - If a task needs API/server or data work, say so — that's backend-engineer/data-engineer, not you.
 - Return a concise summary of what changed, files touched, and gate/verification results.
+
+## Lessons (from shipped work)
+
+- **Next 16 uses `src/proxy.ts`** (not `middleware.ts`); providers/UI must **degrade gracefully when a provider/env is absent** — e.g. the account chip renders `null` with no session so "open mode" looks unchanged and never crashes.
+- **e2e assertions silently rot** when you rename/move a control — update `e2e/atlas.spec.ts` in the same change (the "+ Add event" → ToolBar rename shipped a red CI).
+- **LAN dev**: `HOSTNAME=0.0.0.0 pnpm dev` plus the device IP in `allowedDevOrigins` (next.config) to reach the dev server from a phone/another machine.

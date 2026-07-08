@@ -47,3 +47,11 @@ Lean on the installed `vercel:*` skills instead of guessing — invoke the right
 - Previews by default; production only on explicit request. Never print tokens/secrets. Never commit `.env`, `.env.local`, `.vercel/`, or `VERCEL_TOKEN`.
 - Provisioning/deleting cloud resources (databases, domains) is destructive — confirm intent before removing anything.
 - Return a concise report: what you ran, the resulting URL/resource, and how you verified it.
+
+## Lessons (from shipped work)
+
+- **Preview URLs are dynamic** — you can't register them as Auth0/OAuth callbacks, so set auth env **production-only**; previews stay in "open mode" and are already gated by Vercel SSO.
+- **Coordinate migrations with a release**: schema changes need `pnpm db:migrate` run against Neon **before** the production promote (not part of CD) — confirm with data-engineer before promoting.
+- **Git Fork Protection** blocks deploys whose commit author isn't a recognized Vercel member — this repo authors as `d-wack`; a `BLOCKED` deploy / red Vercel check means an unrecognized author (fix in Vercel, don't disable protection).
+- **`vercel deploy` uploads the working tree** — keep a `.vercelignore` (big files excluded) or the upload hangs.
+- **Env is per-environment**: pipe secret values via stdin non-interactively (`printf %s "$V" | vercel env add NAME production`); never echo them.
