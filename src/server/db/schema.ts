@@ -95,8 +95,8 @@ export const userViews = pgTable(
   "user_views",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    // Auth0 `sub` of the viewer, or the "anonymous" sentinel in open mode.
-    // Server-derived from the session — never client-supplied.
+    // Auth0 `sub` of the viewer. Server-derived from the session — never
+    // client-supplied (open mode writes nothing; the route no-ops without a session).
     userId: text("user_id").notNull(),
     lng: doublePrecision("lng").notNull(),
     lat: doublePrecision("lat").notNull(),

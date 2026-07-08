@@ -11,10 +11,10 @@ import type { NewViewInput, UserView } from "@/types/view";
  */
 export interface ViewsRepository {
   /**
-   * Append a view for `userId` (the server-derived Auth0 `sub`, or the
-   * "anonymous" sentinel). The store assigns `id` and `createdAt`. `userId` is
-   * a separate argument — never part of the client input — so it can't be
-   * spoofed through the request body.
+   * Append a view for `userId` (the server-derived Auth0 `sub`). The store
+   * assigns `id` and `createdAt`. `userId` is a separate argument — never part
+   * of the client input — so it can't be spoofed through the request body.
+   * (Open mode never reaches here: the route no-ops when there's no session.)
    */
   append(input: NewViewInput, userId: string): Promise<UserView>;
   /**
