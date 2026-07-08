@@ -1,13 +1,14 @@
 import type { ReactNode } from "react";
 
 import { AddControls } from "@/components/add/add-controls";
-import { YearDisplay } from "@/components/hud/year-display";
+import { CoordinatePlate } from "@/components/hud/coordinate-plate";
+import { TimelineStrip } from "@/components/hud/timeline-strip";
+import { ToolColumn } from "@/components/hud/tool-column";
+import { YearStat } from "@/components/hud/year-stat";
 import { PlaceInfoPanel } from "@/components/inspect/place-info-panel";
 import { LeftPanel } from "@/components/panel/left-panel";
 import { PlacesPanel } from "@/components/places/places-panel";
 import { GeocodeSearch } from "@/components/search/geocode-search";
-import { TimelineScrubber } from "@/components/timeline/timeline-scrubber";
-import { ToolBar } from "@/components/toolbar/tool-bar";
 import { MasterWidget } from "@/components/widget/master-widget";
 import { cn } from "@/lib/utils";
 
@@ -40,11 +41,12 @@ export function AtlasStageView({
           <LeftPanel />
           <PlacesPanel />
           <GeocodeSearch />
-          <ToolBar />
+          <CoordinatePlate />
+          <ToolColumn />
           <AddControls />
           <PlaceInfoPanel />
-          <YearDisplay />
-          <TimelineScrubber />
+          <YearStat />
+          <TimelineStrip />
         </>
       )}
       {toggle}

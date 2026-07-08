@@ -19,7 +19,7 @@ export function EventListItem({
     "#38bdf8";
 
   return (
-    <li className="flex gap-3 border-b border-white/5 px-3 py-2.5">
+    <li className="flex gap-3 rounded-md bg-white/[0.04] px-3 py-2.5 ring-1 ring-white/10 backdrop-blur-sm">
       <VoteControls
         votes={event.votes}
         userVote={event.userVote}
@@ -31,7 +31,7 @@ export function EventListItem({
             className="h-2 w-2 shrink-0 rounded-full"
             style={{ background: color }}
           />
-          <h3 className="truncate text-sm font-medium text-white/90">
+          <h3 className="truncate text-sm font-medium text-white/90 [text-shadow:0_1px_3px_rgba(0,0,0,0.9)]">
             {event.title}
           </h3>
         </div>
