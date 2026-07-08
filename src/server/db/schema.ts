@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import {
   customType,
+  doublePrecision,
   index,
   integer,
   pgTable,
@@ -79,5 +80,40 @@ export const eventVotes = pgTable(
   (t) => [
     primaryKey({ columns: [t.eventId, t.userId] }),
     index("event_votes_event_id_idx").on(t.eventId),
+  ],
+);
+
+/**
+ * User Context view log — append-only telemetry of where each user was looking
+ * (map center + zoom + timeline year). Deliberately ORTHOGONAL to `events`: no
+ * FK, no shared columns, no PostGIS. It records viewport snapshots so a later
+ * "places you've looked at" surface can rank them; keeping it decoupled keeps
+ * the data lite and lets it be swapped/queried on its own. Never mutated — rows
+ * are inserted and read back most-recent-first.
+ */
+export const userViews = pgTable(
+  "user_views",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    // Auth0 `sub` of the viewer, or the "anonymous" sentinel in open mode.
+    // Server-derived from the session — never client-supplied.
+    userId: text("user_id").notNull(),
+    lng: doublePrecision("lng").notNull(),
+    lat: doublePrecision("lat").notNull(),
+    zoom: doublePrecision("zoom").notNull(),
+    year: integer("year").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    // The read pattern: a user's most-recent views. Composite btree on
+    // (user_id, created_at desc) serves the per-user recent-first scan directly.
+    index("user_views_user_id_created_at_idx").on(
+      t.userId,
+      sql`${t.createdAt} DESC`,
+    ),
+    // Plain created_at index for cross-user analytics / time-window scans.
+    index("user_views_created_at_idx").on(sql`${t.createdAt} DESC`),
   ],
 );

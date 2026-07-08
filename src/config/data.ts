@@ -18,3 +18,10 @@ export const ATLAS_DATA_DIR =
   process.env.ATLAS_DATA_DIR ?? path.join(process.cwd(), ".data");
 
 export const EVENTS_FILE = path.join(ATLAS_DATA_DIR, "events.json");
+
+/**
+ * Writable path for the offline User Context view log. Append-only telemetry,
+ * separate file from events so the two stores stay orthogonal. Same ephemerality
+ * caveat as EVENTS_FILE under standalone/Docker.
+ */
+export const VIEWS_FILE = path.join(ATLAS_DATA_DIR, "views.json");
