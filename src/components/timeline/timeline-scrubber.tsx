@@ -2,23 +2,34 @@
 
 import { useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
 
-import { cn } from "@/lib/utils";
 import {
   TIMELINE_MIN_YEAR,
   formatYear,
   fractionToYear,
+  yearParts,
   yearToFraction,
 } from "@/lib/timeline";
 import { useAtlas } from "@/state/atlas-context";
 
-// Years to label along the track (placed at their computed, non-even fractions).
-const TICK_YEARS = [2000, 1500, 1000, 1, -1000, -2000, TIMELINE_MIN_YEAR];
+// Era bands (start year → label), ordered oldest to newest. Each band runs until
+// the next one begins; the last stretches to the present. Deep-history starts are
+// clamped to the scale's floor so ANTIQUITY still shows on a -3000 → now track.
+const ERAS: readonly { from: number; label: string }[] = [
+  { from: -100000, label: "ANTIQUITY" },
+  { from: -500, label: "CLASSICAL" },
+  { from: 500, label: "MEDIEVAL" },
+  { from: 1500, label: "MODERN" },
+];
+
 const KEY_STEP = 0.03;
 
 /**
- * Bottom "travel back in time" scrubber. Reads/writes `selectedYear` on the
- * era-compressed scale (recent years get most of the track). Selecting a year
- * shows everything up to that year (as-of); dragging back hides recent events.
+ * Bottom "temporal lock" scrubber — a sci-fi HUD readout for the as-of year.
+ * Reads/writes `selectedYear` on the era-compressed scale (recent years get most
+ * of the track). Selecting a year shows everything up to that year (as-of);
+ * dragging back hides recent events. An emerald situation-room glass bar with
+ * labeled era bands, an ambient scan line, a diamond playhead, and the active
+ * year integrated as a large glass readout.
  */
 export function TimelineScrubber() {
   const { selectedYear, setSelectedYear } = useAtlas();
@@ -76,67 +87,84 @@ export function TimelineScrubber() {
     e.preventDefault();
   };
 
-  const handleFraction = yearToFraction(selectedYear, maxYear);
-  const atPresent = selectedYear >= maxYear;
+  const fraction = yearToFraction(selectedYear, maxYear);
+  const { magnitude, era } = yearParts(selectedYear);
+
+  // Era bands as [left, width] track fractions; drop any squeezed to nothing.
+  const bands = ERAS.map((e, i) => {
+    const start = Math.max(e.from, TIMELINE_MIN_YEAR);
+    const end = i + 1 < ERAS.length ? ERAS[i + 1]!.from : maxYear;
+    const left = yearToFraction(start, maxYear);
+    const right = yearToFraction(end, maxYear);
+    return { label: e.label, left, width: Math.max(0, right - left) };
+  }).filter((b) => b.width > 0.001);
 
   return (
-    <div className="absolute right-16 bottom-0 left-0 z-40 flex h-14 items-center gap-4 border-t border-white/10 bg-black/80 px-4 backdrop-blur">
-      <div className="w-40 shrink-0 font-mono text-xs text-emerald-300">
-        <span className="text-emerald-400/60">AS OF </span>
-        {formatYear(selectedYear)}
-        {atPresent && <span className="text-white/40"> · all</span>}
-      </div>
-
-      <div
-        ref={trackRef}
-        role="slider"
-        tabIndex={0}
-        aria-label="Timeline year"
-        aria-valuemin={TIMELINE_MIN_YEAR}
-        aria-valuemax={maxYear}
-        aria-valuenow={selectedYear}
-        aria-valuetext={formatYear(selectedYear)}
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-        onKeyDown={onKeyDown}
-        className="relative h-8 flex-1 cursor-pointer touch-none select-none"
-      >
-        {/* rail */}
-        <div className="absolute top-1/2 h-0.5 w-full -translate-y-1/2 rounded bg-white/15" />
-        {/* filled portion up to the handle */}
-        <div
-          className="absolute top-1/2 h-0.5 -translate-y-1/2 rounded bg-emerald-400/70"
-          style={{ width: `${handleFraction * 100}%` }}
-        />
-        {/* tick labels */}
-        {TICK_YEARS.map((y) => (
-          <span
-            key={y}
-            className="pointer-events-none absolute top-1/2 mt-2 -translate-x-1/2 font-mono text-[9px] text-white/35"
-            style={{ left: `${yearToFraction(y, maxYear) * 100}%` }}
-          >
-            {formatYear(y)}
+    <div className="absolute right-16 bottom-3 left-3 z-40">
+      <div className="rounded-lg border border-emerald-400/25 bg-[#02110c]/80 p-4 shadow-[0_0_30px_rgba(16,185,129,0.1)] backdrop-blur">
+        {/* Integrated readout header */}
+        <div className="mb-3 flex items-baseline justify-between font-mono">
+          <span className="text-[10px] tracking-[0.35em] text-emerald-400/60">
+            TEMPORAL LOCK
           </span>
-        ))}
-        {/* handle */}
-        <div
-          className={cn(
-            "absolute top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-black bg-emerald-400 shadow",
-            dragging && "ring-2 ring-emerald-300/50",
-          )}
-          style={{ left: `${handleFraction * 100}%` }}
-        />
-      </div>
+          <span className="flex items-baseline gap-1 text-emerald-300 [text-shadow:0_0_14px_rgba(16,185,129,0.6)]">
+            <span className="text-4xl font-bold tabular-nums">{magnitude}</span>
+            <span className="text-sm font-semibold tracking-widest text-emerald-400/80">
+              {era}
+            </span>
+          </span>
+        </div>
 
-      <button
-        type="button"
-        onClick={() => setSelectedYear(maxYear)}
-        disabled={atPresent}
-        className="shrink-0 rounded-md px-2.5 py-1 text-xs text-white/60 hover:text-white disabled:opacity-30"
-      >
-        Reset
-      </button>
+        <div
+          ref={trackRef}
+          role="slider"
+          tabIndex={0}
+          aria-label="Timeline year"
+          aria-valuemin={TIMELINE_MIN_YEAR}
+          aria-valuemax={maxYear}
+          aria-valuenow={selectedYear}
+          aria-valuetext={formatYear(selectedYear)}
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={onPointerUp}
+          onKeyDown={onKeyDown}
+          className="relative h-11 cursor-pointer touch-none overflow-hidden rounded-md border border-emerald-400/20 bg-black/50 outline-none select-none focus-visible:ring-2 focus-visible:ring-emerald-300/60"
+        >
+          {/* Era bands */}
+          {bands.map((b) => (
+            <div
+              key={b.label}
+              className="absolute inset-y-0 flex items-end justify-center border-r border-emerald-400/10 bg-emerald-400/[0.04]"
+              style={{ left: `${b.left * 100}%`, width: `${b.width * 100}%` }}
+            >
+              <span className="mb-1 truncate px-1 font-mono text-[8px] tracking-[0.25em] text-emerald-300/40">
+                {b.label}
+              </span>
+            </div>
+          ))}
+
+          {/* Filled region up to the playhead */}
+          <div
+            className="absolute inset-y-0 left-0 bg-gradient-to-r from-emerald-500/10 to-emerald-400/25"
+            style={{ width: `${fraction * 100}%` }}
+          />
+
+          {/* Ambient scan line (paused for reduced motion via globals.css) */}
+          <div
+            aria-hidden
+            className="anim-hud-scan pointer-events-none absolute inset-y-0 w-8 bg-gradient-to-r from-transparent via-emerald-300/25 to-transparent"
+          />
+
+          {/* Diamond playhead */}
+          <div
+            className="pointer-events-none absolute inset-y-0 w-[2px] bg-emerald-300 shadow-[0_0_12px_rgba(16,185,129,0.9)]"
+            style={{ left: `${fraction * 100}%` }}
+          >
+            <span className="absolute -top-[3px] left-1/2 h-2 w-2 -translate-x-1/2 rotate-45 bg-emerald-300 shadow-[0_0_8px_rgba(16,185,129,0.9)]" />
+            <span className="absolute -bottom-[3px] left-1/2 h-2 w-2 -translate-x-1/2 rotate-45 bg-emerald-300 shadow-[0_0_8px_rgba(16,185,129,0.9)]" />
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

@@ -19,6 +19,8 @@ const eslintConfig = defineConfig([
     "coverage/**",
     "playwright-report/**",
     "test-results/**",
+    // Throwaway prototype lab (gitignored); not part of the app build.
+    "sandbox/**",
   ]),
 ]);
 

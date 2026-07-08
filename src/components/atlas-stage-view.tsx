@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 
 import { AddControls } from "@/components/add/add-controls";
-import { YearDisplay } from "@/components/hud/year-display";
 import { PlaceInfoPanel } from "@/components/inspect/place-info-panel";
 import { LeftPanel } from "@/components/panel/left-panel";
 import { PlacesPanel } from "@/components/places/places-panel";
@@ -43,7 +42,6 @@ export function AtlasStageView({
           <ToolBar />
           <AddControls />
           <PlaceInfoPanel />
-          <YearDisplay />
           <TimelineScrubber />
         </>
       )}

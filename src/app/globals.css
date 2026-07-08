@@ -68,6 +68,28 @@ body {
   display: none;
 }
 
+/* HUD timeline: an ambient scan line sweeping the situation-room track. The
+   emerald sheen drifts left→right across the bar; overflow-hidden clips it. */
+.anim-hud-scan {
+  animation: hud-scan 6s linear infinite;
+}
+
+@keyframes hud-scan {
+  0% {
+    left: -10%;
+  }
+  100% {
+    left: 110%;
+  }
+}
+
+/* Respect users who ask for less motion: park the scan line, keep the glow. */
+@media (prefers-reduced-motion: reduce) {
+  .anim-hud-scan {
+    animation: none;
+  }
+}
+
 /* Layer markers on the globe. The wrapper is positioned by MapLibre and stays
    transform-free; the inner shape carries color/border/shape (fill set inline). */
 .atlas-marker {

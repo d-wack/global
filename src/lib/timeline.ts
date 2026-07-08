@@ -38,6 +38,16 @@ export function formatYear(year: number): string {
   return "1 BCE";
 }
 
+/** Magnitude + era tag, for readouts that style the two parts separately. */
+export function yearParts(year: number): {
+  magnitude: number;
+  era: "CE" | "BCE";
+} {
+  if (year > 0) return { magnitude: year, era: "CE" };
+  if (year < 0) return { magnitude: -year, era: "BCE" };
+  return { magnitude: 1, era: "BCE" };
+}
+
 /** As-of filter: events that occurred in or before the selected year. */
 export function filterAsOf(
   events: readonly AtlasEvent[],
