@@ -2,17 +2,11 @@
 
 import dynamic from "next/dynamic";
 
-import { AddControls } from "@/components/add/add-controls";
+import { AtlasStageView } from "@/components/atlas-stage-view";
+import { ChromeToggle } from "@/components/chrome/chrome-toggle";
 import { ViewLogger } from "@/components/context/view-logger";
-import { YearDisplay } from "@/components/hud/year-display";
-import { PlaceInfoPanel } from "@/components/inspect/place-info-panel";
-import { LeftPanel } from "@/components/panel/left-panel";
-import { PlacesPanel } from "@/components/places/places-panel";
-import { GeocodeSearch } from "@/components/search/geocode-search";
-import { TimelineScrubber } from "@/components/timeline/timeline-scrubber";
-import { ToolBar } from "@/components/toolbar/tool-bar";
-import { MasterWidget } from "@/components/widget/master-widget";
-import { AtlasProvider } from "@/state/atlas-context";
+import { useChromeHotkey } from "@/hooks/use-chrome-hotkey";
+import { AtlasProvider, useAtlas } from "@/state/atlas-context";
 
 // MapLibre touches the DOM/WebGL and must not render on the server.
 const GlobeMap = dynamic(() => import("@/components/globe/globe-map"), {
@@ -21,25 +15,33 @@ const GlobeMap = dynamic(() => import("@/components/globe/globe-map"), {
 
 /**
  * Full-screen shell that composes the globe and its overlays under a single
- * {@link AtlasProvider}. The left panel and add/search overlays are layered in
- * as the slice progresses.
+ * {@link AtlasProvider}. Immersive mode (the chrome toggle / `H` hotkey) hides
+ * every overlay but the globe; the toggle itself and the headless view logger
+ * stay mounted.
  */
 export function AtlasView() {
   return (
     <AtlasProvider>
-      <div className="atlas-space fixed inset-0 overflow-hidden">
-        <GlobeMap />
-        <MasterWidget />
-        <LeftPanel />
-        <PlacesPanel />
-        <GeocodeSearch />
-        <ToolBar />
-        <AddControls />
-        <PlaceInfoPanel />
-        <YearDisplay />
-        <TimelineScrubber />
-        <ViewLogger />
-      </div>
+      <AtlasStage />
     </AtlasProvider>
+  );
+}
+
+/** Connects the stage to context: reads immersive state, mounts the hotkey. */
+function AtlasStage() {
+  const { chromeVisible, toggleChrome } = useAtlas();
+  useChromeHotkey();
+
+  return (
+    <>
+      <AtlasStageView
+        chromeVisible={chromeVisible}
+        globe={<GlobeMap />}
+        toggle={
+          <ChromeToggle chromeVisible={chromeVisible} onToggle={toggleChrome} />
+        }
+      />
+      <ViewLogger />
+    </>
   );
 }
