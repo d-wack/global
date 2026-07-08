@@ -8,6 +8,7 @@ import { useEffect, useRef } from "react";
 import { BASEMAP_STYLE, INITIAL_VIEW } from "@/config/map";
 import { applyLayerFilter, resolveMarkerStyle } from "@/lib/layers";
 import { filterAsOf } from "@/lib/timeline";
+import { filterVisible } from "@/lib/viewport";
 import { useAtlas } from "@/state/atlas-context";
 import type { MarkerShape } from "@/types/layer";
 
@@ -125,6 +126,10 @@ export default function GlobeMap() {
       );
     });
 
+    atlasRef.current.registerFlyToView((center, zoom) => {
+      map.flyTo({ center: [center.lng, center.lat], zoom, duration: 1200 });
+    });
+
     return () => {
       map.remove();
       mapRef.current = null;
@@ -141,18 +146,24 @@ export default function GlobeMap() {
     }
   }, [atlas.activeTool]);
 
-  // Sync markers to the events visible at the selected year AND active layers
-  // (diff by id; restyle in place when an event's winning layer changes).
+  // Sync markers to the events visible in the current viewport at the selected
+  // year AND active layers (diff by id; restyle in place when an event's
+  // winning layer changes). Bounds narrow the set to what's on screen; when
+  // bounds are null (pre-first-settle) we show every in-year/in-layer event.
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
     const markers = markersRef.current;
     const seen = new Set<string>();
 
-    const visible = applyLayerFilter(
+    const inYearLayer = applyLayerFilter(
       filterAsOf(atlas.events, atlas.selectedYear),
       atlas.activeLayerIds,
     );
+    // TODO(P3): scale filter by event.z once events carry a z relevance band.
+    const visible = atlas.bounds
+      ? filterVisible(inYearLayer, atlas.bounds)
+      : inYearLayer;
 
     for (const event of visible) {
       seen.add(event.id);
@@ -184,7 +195,7 @@ export default function GlobeMap() {
         markers.delete(id);
       }
     }
-  }, [atlas.events, atlas.selectedYear, atlas.activeLayerIds]);
+  }, [atlas.events, atlas.selectedYear, atlas.activeLayerIds, atlas.bounds]);
 
   // Size with h-full/w-full, not `absolute inset-0`: maplibre-gl.css forces
   // `position: relative` on its container, which cancels inset-based stretching

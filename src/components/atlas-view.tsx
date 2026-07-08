@@ -3,9 +3,11 @@
 import dynamic from "next/dynamic";
 
 import { AddControls } from "@/components/add/add-controls";
+import { ViewLogger } from "@/components/context/view-logger";
 import { YearDisplay } from "@/components/hud/year-display";
 import { PlaceInfoPanel } from "@/components/inspect/place-info-panel";
 import { LeftPanel } from "@/components/panel/left-panel";
+import { PlacesPanel } from "@/components/places/places-panel";
 import { GeocodeSearch } from "@/components/search/geocode-search";
 import { TimelineScrubber } from "@/components/timeline/timeline-scrubber";
 import { ToolBar } from "@/components/toolbar/tool-bar";
@@ -29,12 +31,14 @@ export function AtlasView() {
         <GlobeMap />
         <MasterWidget />
         <LeftPanel />
+        <PlacesPanel />
         <GeocodeSearch />
         <ToolBar />
         <AddControls />
         <PlaceInfoPanel />
         <YearDisplay />
         <TimelineScrubber />
+        <ViewLogger />
       </div>
     </AtlasProvider>
   );

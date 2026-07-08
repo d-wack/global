@@ -31,6 +31,7 @@ export interface MapView {
 export type ToolId = "explore" | "add" | "inspect";
 
 type FlyToBounds = (bbox: [number, number, number, number]) => void;
+type FlyToView = (center: { lng: number; lat: number }, zoom: number) => void;
 
 export interface AtlasContextValue extends UseEvents, UsePlaceInfo {
   /** Current map viewport, or null until the map first settles. */
@@ -56,6 +57,9 @@ export interface AtlasContextValue extends UseEvents, UsePlaceInfo {
   /** The map registers its imperative fly-to here; the search box calls it. */
   registerFlyTo: (fn: FlyToBounds) => void;
   flyToBounds: FlyToBounds;
+  /** The map registers a center+zoom fly-to here; the places history calls it. */
+  registerFlyToView: (fn: FlyToView) => void;
+  flyToView: FlyToView;
 }
 
 const AtlasContext = createContext<AtlasContextValue | null>(null);
@@ -76,6 +80,7 @@ export function AtlasProvider({ children }: { children: ReactNode }) {
   const [activeTool, setActiveToolState] = useState<ToolId>("explore");
   const [pendingPoint, setPendingPoint] = useState<PendingPoint | null>(null);
   const flyToRef = useRef<FlyToBounds | null>(null);
+  const flyToViewRef = useRef<FlyToView | null>(null);
 
   const toggleLayer = useCallback((layerId: string) => {
     setActiveLayerIds((prev) => {
@@ -105,6 +110,14 @@ export function AtlasProvider({ children }: { children: ReactNode }) {
     flyToRef.current?.(bbox);
   }, []);
 
+  const registerFlyToView = useCallback((fn: FlyToView) => {
+    flyToViewRef.current = fn;
+  }, []);
+
+  const flyToView = useCallback<FlyToView>((center, zoom) => {
+    flyToViewRef.current?.(center, zoom);
+  }, []);
+
   const value = useMemo<AtlasContextValue>(
     () => ({
       ...eventsApi,
@@ -125,6 +138,8 @@ export function AtlasProvider({ children }: { children: ReactNode }) {
       setPendingPoint,
       registerFlyTo,
       flyToBounds,
+      registerFlyToView,
+      flyToView,
     }),
     [
       eventsApi,
@@ -140,6 +155,8 @@ export function AtlasProvider({ children }: { children: ReactNode }) {
       pendingPoint,
       registerFlyTo,
       flyToBounds,
+      registerFlyToView,
+      flyToView,
     ],
   );
 
