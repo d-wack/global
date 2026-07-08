@@ -61,6 +61,13 @@ body {
   left: 21rem !important;
 }
 
+/* Immersive mode: hide every MapLibre control with the overlay chrome. This
+   also neutralizes the .maplibregl-ctrl-top-left offset above, which assumes
+   the left panel is present. */
+.chrome-hidden .maplibregl-ctrl {
+  display: none;
+}
+
 /* Layer markers on the globe. The wrapper is positioned by MapLibre and stays
    transform-free; the inner shape carries color/border/shape (fill set inline). */
 .atlas-marker {

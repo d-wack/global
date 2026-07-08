@@ -43,3 +43,22 @@ describe("AtlasProvider tool switching", () => {
     expect(result.current.pendingPoint).toEqual({ lng: 3, lat: 4 });
   });
 });
+
+describe("AtlasProvider chrome visibility", () => {
+  it("shows the chrome by default", () => {
+    stubFetch();
+    const { result } = renderHook(() => useAtlas(), { wrapper });
+    expect(result.current.chromeVisible).toBe(true);
+  });
+
+  it("toggles chrome visibility back and forth", () => {
+    stubFetch();
+    const { result } = renderHook(() => useAtlas(), { wrapper });
+
+    act(() => result.current.toggleChrome());
+    expect(result.current.chromeVisible).toBe(false);
+
+    act(() => result.current.toggleChrome());
+    expect(result.current.chromeVisible).toBe(true);
+  });
+});

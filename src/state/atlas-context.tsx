@@ -60,6 +60,10 @@ export interface AtlasContextValue extends UseEvents, UsePlaceInfo {
   /** The map registers a center+zoom fly-to here; the places history calls it. */
   registerFlyToView: (fn: FlyToView) => void;
   flyToView: FlyToView;
+  /** Whether the overlay chrome is shown; false = immersive (globe only). */
+  chromeVisible: boolean;
+  /** Flip immersive mode: hide all overlays but the globe, or restore them. */
+  toggleChrome: () => void;
 }
 
 const AtlasContext = createContext<AtlasContextValue | null>(null);
@@ -79,6 +83,7 @@ export function AtlasProvider({ children }: { children: ReactNode }) {
   );
   const [activeTool, setActiveToolState] = useState<ToolId>("explore");
   const [pendingPoint, setPendingPoint] = useState<PendingPoint | null>(null);
+  const [chromeVisible, setChromeVisible] = useState(true);
   const flyToRef = useRef<FlyToBounds | null>(null);
   const flyToViewRef = useRef<FlyToView | null>(null);
 
@@ -118,6 +123,10 @@ export function AtlasProvider({ children }: { children: ReactNode }) {
     flyToViewRef.current?.(center, zoom);
   }, []);
 
+  const toggleChrome = useCallback(() => {
+    setChromeVisible((prev) => !prev);
+  }, []);
+
   const value = useMemo<AtlasContextValue>(
     () => ({
       ...eventsApi,
@@ -140,6 +149,8 @@ export function AtlasProvider({ children }: { children: ReactNode }) {
       flyToBounds,
       registerFlyToView,
       flyToView,
+      chromeVisible,
+      toggleChrome,
     }),
     [
       eventsApi,
@@ -157,6 +168,8 @@ export function AtlasProvider({ children }: { children: ReactNode }) {
       flyToBounds,
       registerFlyToView,
       flyToView,
+      chromeVisible,
+      toggleChrome,
     ],
   );
 
