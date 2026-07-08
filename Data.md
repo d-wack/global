@@ -54,11 +54,19 @@ The physical `events` table (`src/server/db/schema.ts`; first migration in
 | `layer_ids`   | `text[]`                | GIN index (many-to-many layer membership) |
 | `geom`        | `geography(Point,4326)` | GiST index (spatial queries)              |
 | `year`        | `integer`               | btree index (negative = BCE)              |
-| `votes`       | `integer`               | net community score                       |
+| `votes`       | `integer`               | **base** score (see `event_votes` below)  |
+| `created_by`  | `text`                  | Auth0 `sub` of the author (btree; nullable)|
 | `created_at`  | `timestamptz`           | btree index (desc); importance recency    |
 
 `geom` replaces the domain model's `lng`/`lat` pair at the storage layer; the
 `AtlasEvent` type the client sees is unchanged (the repository maps between them).
+
+**`event_votes`** (per-user voting; migration `0001`) — `event_id uuid → events(id) on
+delete cascade`, `user_id text` (Auth0 `sub`), `direction text` (`'up'|'down'`),
+`created_at timestamptz`, **PK `(event_id, user_id)`** + index on `event_id`. The displayed
+score is **derived** — `events.votes` (the seed/base number) **plus** the ledger sum
+`Σ(±1)` over `event_votes` — so the counter can't drift from the ledger. `created_by` and
+per-user votes are populated from the Auth0 session server-side, never from the request body.
 
 ### Local dev database
 

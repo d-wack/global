@@ -72,8 +72,16 @@ Preview URLs require a Vercel login to view (`ssoProtection`); production is pub
 
 ### Doing a release
 
-1. Open a `develop → main` PR. 2. Wait for `ci-success`. 3. Merge it. 4. Vercel deploys
-   production automatically; watch it reach `READY`, then smoke-test the live site.
+1. **If the change includes a DB migration, apply it to Neon FIRST** — migrations are
+   NOT part of CD (Vercel deploys code, not schema). Promoting code that expects a new
+   table/column _before_ the migration is applied causes 500s in production.
+   ```bash
+   export DATABASE_URL=$(grep '^DATABASE_URL_UNPOOLED=' .env.local | cut -d= -f2- | tr -d '"')
+   pnpm db:migrate
+   ```
+2. Open a `develop → main` PR. 3. Wait for `ci-success`. 4. Merge it. 5. Vercel deploys
+   production automatically; watch it reach `READY`, then smoke-test the live site
+   (page loads, `/api/events` returns data — not a 500).
 
 ### Manual / one-off deploys (rare — `vercel-engineer`)
 
@@ -87,15 +95,23 @@ Rollback by promoting a previous deployment (`vercel promote <url>`) or revertin
 **Vercel project env is the source of truth** (the Neon integration set `DATABASE_URL` for
 all environments):
 
-| Var                    | Purpose                                  |
-| ---------------------- | ---------------------------------------- |
-| `DATABASE_URL`         | Neon pooled connection (Drizzle runtime) |
-| `NOMINATIM_USER_AGENT` | server-side geocoding contact string     |
-| `WIKIPEDIA_USER_AGENT` | server-side place-info contact string    |
+| Var                    | Purpose                                                    |
+| ---------------------- | ---------------------------------------------------------- |
+| `DATABASE_URL`         | Neon pooled connection (Drizzle runtime)                   |
+| `NOMINATIM_USER_AGENT` | server-side geocoding contact string                       |
+| `WIKIPEDIA_USER_AGENT` | server-side place-info contact string                      |
+| `AUTH0_DOMAIN`         | Auth0 tenant host (see §5.1) — **production only**         |
+| `AUTH0_CLIENT_ID`      | Auth0 app client id — **production only**                  |
+| `AUTH0_CLIENT_SECRET`  | Auth0 app client secret — **production only**              |
+| `AUTH0_SECRET`         | session cookie encryption key (`openssl rand -hex 32`)     |
+| `APP_BASE_URL`         | app origin for Auth0 callbacks (per environment)           |
 
-- Sync locally with `vercel env pull .env.local`.
-- **Never commit** `.env`, `.env.local`, or `.vercel/` (all gitignored). `VERCEL_TOKEN` lives
-  only in the gitignored `.env`; never print or commit it.
+- Sync locally with `vercel env pull .env.local`. Locally, `pnpm auth0:provision` writes the
+  `AUTH0_*` app vars into `.env.local` (see §5.1).
+- **`AUTH0_*` is set on Vercel for _production only_** — previews stay in Auth0 "open mode"
+  (their dynamic URLs aren't registered as Auth0 callbacks) and are protected by Vercel SSO.
+- **Never commit** `.env`, `.env.local`, or `.vercel/` (all gitignored). `VERCEL_TOKEN` and the
+  `AUTH0_MGMT_*` credentials live only in the gitignored `.env`; never print or commit them.
 
 ---
 
@@ -111,6 +127,36 @@ commits authorize.
 - **Cause:** the commit's author isn't a Vercel member (e.g. a different GitHub identity).
 - **Fix:** author commits as `d-wack`, or add that identity to the Vercel team. **Do not**
   disable Git Fork Protection to work around it.
+
+---
+
+## Authentication (Auth0)
+
+The app is **private** — login is required to view. Built on **@auth0/nextjs-auth0 v4**.
+
+- **Wiring:** `src/lib/auth0.ts` (`Auth0Client`), `src/lib/auth0-config.ts` (`isAuth0Configured()`),
+  `src/proxy.ts` (the whole-app gate), `src/server/auth/session.ts` (`getSessionUser()`), and the
+  SDK's auto-mounted `/auth/*` routes (login / logout / callback).
+- **The gate** (`src/proxy.ts`): when Auth0 is configured, anonymous **page** requests →
+  `/auth/login`, anonymous **`/api/*`** → `401`. It is a **no-op when Auth0 is unconfigured**
+  (local / CI "open mode"), and **fails closed (503) in production** (`VERCEL_ENV === "production"`)
+  if misconfigured — so a missing var can never silently expose the app.
+- **Attribution & voting:** each event stores `created_by` (the Auth0 `sub`, derived server-side —
+  never from the request body); votes are one-per-user via `event_votes`, and the displayed score is
+  **derived** (`events.votes` base + ledger) so it can't drift.
+
+### 5.1 Provisioning (one-time)
+
+The Auth0 app is created via the **Management API**, not by hand:
+
+- The user creates an M2M Management-API app and puts `AUTH0_MGMT_DOMAIN` / `AUTH0_MGMT_CLIENT_ID` /
+  `AUTH0_MGMT_CLIENT_SECRET` in the gitignored `.env` (see `Brandon-Auth0.md`).
+- `pnpm auth0:provision` (`scripts/auth0-provision.ts`) then creates/updates the `planet-atlas`
+  Regular Web App, registers callback/logout/origin URLs, generates `AUTH0_SECRET`, and writes the
+  `AUTH0_*` app vars to `.env.local`.
+- **Callback URLs must include every origin you log in from** (`localhost:3000`, your dev port, and
+  `https://global-jade-tau.vercel.app`) or login fails with a callback mismatch; `APP_BASE_URL` must
+  match the origin the browser uses.
 
 ---
 
