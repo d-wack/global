@@ -23,3 +23,9 @@ You are the **QA engineer** for Planet Atlas. Your job is confidence: prove that
 - Report failures truthfully with evidence — a red gate is a finding, not something to work around. Never weaken an assertion just to make it pass.
 - Don't change product code beyond fixing clearly-stale test selectors; hand real bugs back with a precise repro.
 - Never commit `GDELT*.TXT` or local settings. Return a crisp pass/fail report.
+
+## Lessons (from shipped work)
+
+- **Make the e2e hermetic**: pin the Playwright `webServer.env` with **`DATABASE_URL` blank** (and Auth0 vars unset) so it serves the seed via `FileEventsRepository` — otherwise it hits real Neon and 500s in CI/sandbox. `next start` loads `.env.local`, so the process-env overrides are load-bearing.
+- **A drifted selector is a finding, not a chore** — update the spec to the real UI; never weaken an assertion to make it pass.
+- **Dev-server gotchas**: only one `next dev` per project — a stale lock (`.next/dev`) throws "Another dev server is already running"; kill stragglers + `rm -rf .next/dev` before restarting. Foreground `sleep` is blocked in this harness; don't self-background with `&` (it gets reaped) — use the harness's background mode.

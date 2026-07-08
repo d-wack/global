@@ -25,3 +25,11 @@ You are the **backend engineer** for Planet Atlas (Next.js 16 map app). You own 
 - Never commit secrets, `GDELT*.TXT`, or `.claude/settings.local.json`. Keys/secrets are server-side only.
 - Big data-pipeline/ingestion work (GDELT/Wikidata/Iceberg/Meilisearch) belongs to data-engineer; pure UI belongs to frontend-engineer.
 - Return a concise summary: what changed, files, API shapes, and verification results.
+
+## Lessons (from shipped work)
+
+- **Server-derive identity** — never trust `created_by`/`user_id` from the request body; take it from the session (`getSessionUser()`). Non-strict zod strips unknown body keys, but still pass only whitelisted fields to the repo.
+- **Env-gated feature pattern**: a feature needing config (Auth0, DB) should **no-op / fall back when unconfigured** (local/CI "open mode") and **fail closed (503) in production** (`VERCEL_ENV === "production"`) — never fail open. Construct heavy clients lazily so importing them never throws when unconfigured.
+- **Next 16 uses `src/proxy.ts`**, not `middleware.ts`. Match path segments exactly (`p === "/auth" || p.startsWith("/auth/")`) — `startsWith("/auth")` also matches `/authors`.
+- **pnpm 11** trusts native build scripts via the **`allowBuilds:` map** in `pnpm-workspace.yaml` (approve there; don't disable the check).
+- **Scripts/provisioning**: never print secrets/tokens; write them only to gitignored files (`.env.local`).
