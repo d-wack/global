@@ -60,6 +60,13 @@ The physical `events` table (`src/server/db/schema.ts`; first migration in
 `geom` replaces the domain model's `lng`/`lat` pair at the storage layer; the
 `AtlasEvent` type the client sees is unchanged (the repository maps between them).
 
+**`user_views`** (append-only view-log; migration `0002`) — `id`, `user_id text`, `lng`/`lat`/
+`zoom` (`double precision`), `year integer`, `created_at timestamptz`; indexes on
+`(user_id, created_at desc)` + `created_at`. Captures the **User Context** (`x,y,z,date`) of
+settled views for a "places I've visited" history + analytics. **Deliberately orthogonal to
+`events`** (no FK, no PostGIS) so it locks in nothing; behind its own `ViewsRepository` seam.
+See `Concepts.md`.
+
 ### Local dev database
 
 Local dev uses a **Neon dev branch**. Pull its `DATABASE_URL`
