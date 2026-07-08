@@ -33,6 +33,10 @@ Everything phase-specific sits behind a boundary; keep it that way.
   votes + recency decay now, feed/spatial terms later. Inject `now`, no I/O.
 - **Viewport filter** (`src/lib/viewport.ts`) — pure, client-side bounds/category/
   text filters; moves to server-side PostGIS spatial queries in a later phase.
+- **User Context** (`src/hooks/use-user-context.ts`) — `{lng,lat,zoom,year}` (x,y,z,date):
+  where/when the user is looking; drives viewport-aware display. Settled views are logged to
+  `user_views` (append-only, behind `ViewsRepository`) for a "places I've visited" history +
+  analytics — orthogonal to events. See `Concepts.md`.
 - **Basemap** (`src/config/map.ts`) — one style constant (CARTO dark → PMTiles/keyed).
 - **Geocoder** (`src/server/geocode/`) — `Geocoder` interface + Nominatim impl,
   reached only through `/api/geocode` (never the client directly).

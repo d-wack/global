@@ -16,6 +16,17 @@ export const newEventSchema = z.object({
   year: z.number().int().min(-4000).max(3000),
 });
 
+// A settled map view logged for the authenticated caller. `userId` is NEVER
+// part of the body — it's derived server-side from the session (see the
+// ViewsRepository seam). Bounds mirror the event coordinate/year ranges; zoom
+// is clamped to MapLibre's practical maximum (~24).
+export const newViewSchema = z.object({
+  lng: z.number().min(-180).max(180),
+  lat: z.number().min(-90).max(90),
+  zoom: z.number().min(0).max(24),
+  year: z.number().int().min(-4000).max(3000),
+});
+
 export const voteSchema = z.object({
   direction: z.enum(["up", "down"]),
 });
@@ -31,6 +42,7 @@ export const placeInfoQuerySchema = z.object({
 });
 
 export type NewEventBody = z.infer<typeof newEventSchema>;
+export type NewViewBody = z.infer<typeof newViewSchema>;
 export type VoteBody = z.infer<typeof voteSchema>;
 
 export type ParseResult<T> =

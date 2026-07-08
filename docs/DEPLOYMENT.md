@@ -95,16 +95,16 @@ Rollback by promoting a previous deployment (`vercel promote <url>`) or revertin
 **Vercel project env is the source of truth** (the Neon integration set `DATABASE_URL` for
 all environments):
 
-| Var                    | Purpose                                                    |
-| ---------------------- | ---------------------------------------------------------- |
-| `DATABASE_URL`         | Neon pooled connection (Drizzle runtime)                   |
-| `NOMINATIM_USER_AGENT` | server-side geocoding contact string                       |
-| `WIKIPEDIA_USER_AGENT` | server-side place-info contact string                      |
-| `AUTH0_DOMAIN`         | Auth0 tenant host (see §5.1) — **production only**         |
-| `AUTH0_CLIENT_ID`      | Auth0 app client id — **production only**                  |
-| `AUTH0_CLIENT_SECRET`  | Auth0 app client secret — **production only**              |
-| `AUTH0_SECRET`         | session cookie encryption key (`openssl rand -hex 32`)     |
-| `APP_BASE_URL`         | app origin for Auth0 callbacks (per environment)           |
+| Var                    | Purpose                                                |
+| ---------------------- | ------------------------------------------------------ |
+| `DATABASE_URL`         | Neon pooled connection (Drizzle runtime)               |
+| `NOMINATIM_USER_AGENT` | server-side geocoding contact string                   |
+| `WIKIPEDIA_USER_AGENT` | server-side place-info contact string                  |
+| `AUTH0_DOMAIN`         | Auth0 tenant host (see §5.1) — **production only**     |
+| `AUTH0_CLIENT_ID`      | Auth0 app client id — **production only**              |
+| `AUTH0_CLIENT_SECRET`  | Auth0 app client secret — **production only**          |
+| `AUTH0_SECRET`         | session cookie encryption key (`openssl rand -hex 32`) |
+| `APP_BASE_URL`         | app origin for Auth0 callbacks (per environment)       |
 
 - Sync locally with `vercel env pull .env.local`. Locally, `pnpm auth0:provision` writes the
   `AUTH0_*` app vars into `.env.local` (see §5.1).
