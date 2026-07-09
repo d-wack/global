@@ -61,6 +61,34 @@ body {
   left: 21rem !important;
 }
 
+/* Immersive mode: hide every MapLibre control with the overlay chrome. This
+   also neutralizes the .maplibregl-ctrl-top-left offset above, which assumes
+   the left panel is present. */
+.chrome-hidden .maplibregl-ctrl {
+  display: none;
+}
+
+/* Subtle scrollbar for overlay lists (the left event feed). A thin, translucent
+   thumb on a transparent track so scrolling stays possible without the chunky
+   default bar cluttering the glass feed. Brightens slightly on hover. */
+.atlas-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.14) transparent;
+}
+.atlas-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+.atlas-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.atlas-scroll::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.12);
+  border-radius: 9999px;
+}
+.atlas-scroll:hover::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.24);
+}
+
 /* Layer markers on the globe. The wrapper is positioned by MapLibre and stays
    transform-free; the inner shape carries color/border/shape (fill set inline). */
 .atlas-marker {

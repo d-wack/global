@@ -5,6 +5,7 @@ import {
   formatYear,
   fractionToYear,
   TIMELINE_MIN_YEAR,
+  yearParts,
   yearToFraction,
 } from "@/lib/timeline";
 import type { AtlasEvent } from "@/types/event";
@@ -68,6 +69,14 @@ describe("formatYear", () => {
     expect(formatYear(2026)).toBe("2026 CE");
     expect(formatYear(-2560)).toBe("2560 BCE");
     expect(formatYear(0)).toBe("1 BCE");
+  });
+});
+
+describe("yearParts", () => {
+  it("splits magnitude and era for CE, BCE, and year zero", () => {
+    expect(yearParts(2026)).toEqual({ magnitude: 2026, era: "CE" });
+    expect(yearParts(-2560)).toEqual({ magnitude: 2560, era: "BCE" });
+    expect(yearParts(0)).toEqual({ magnitude: 1, era: "BCE" });
   });
 });
 

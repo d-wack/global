@@ -23,9 +23,15 @@ test("atlas shell renders the panel, readout, and controls", async ({
   await news.click();
   await expect(news).toHaveAttribute("aria-pressed", "false");
 
-  // Search inputs and the toolbar tools are present.
+  // Search inputs and the toolbar tools are present. The tools are a radiogroup
+  // (explore/add/inspect), so they expose the `radio` role, not `button`.
   await expect(page.getByLabel("Search events")).toBeVisible();
   await expect(page.getByLabel("Search for a place")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Explore" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Inspect" })).toBeVisible();
+  await expect(page.getByRole("radio", { name: "Explore" })).toBeVisible();
+  await expect(page.getByRole("radio", { name: "Inspect" })).toBeVisible();
+
+  // The immersive-mode toggle lives on the same toolbar as the restore control.
+  await expect(
+    page.getByRole("button", { name: "Hide interface" }),
+  ).toBeVisible();
 });

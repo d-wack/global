@@ -33,6 +33,10 @@ Everything phase-specific sits behind a boundary; keep it that way.
   votes + recency decay now, feed/spatial terms later. Inject `now`, no I/O.
 - **Viewport filter** (`src/lib/viewport.ts`) — pure, client-side bounds/category/
   text filters; moves to server-side PostGIS spatial queries in a later phase.
+- **User Context** (`src/hooks/use-user-context.ts`) — `{lng,lat,zoom,year}` (x,y,z,date):
+  where/when the user is looking; drives viewport-aware display. Settled views are logged to
+  `user_views` (append-only, behind `ViewsRepository`) for a "places I've visited" history +
+  analytics — orthogonal to events. See `Concepts.md`.
 - **Basemap** (`src/config/map.ts`) — one style constant (CARTO dark → PMTiles/keyed).
 - **Geocoder** (`src/server/geocode/`) — `Geocoder` interface + Nominatim impl,
   reached only through `/api/geocode` (never the client directly).
@@ -41,6 +45,25 @@ Everything phase-specific sits behind a boundary; keep it that way.
   `next/dynamic` `ssr:false`; markers are managed imperatively.
 - All API input is zod-validated (`src/lib/schemas.ts`); fs/geocoder code is
   server-only.
+- **Auth (Auth0)** — the app is **private**. `src/proxy.ts` gates the whole app
+  (anonymous page → `/auth/login`, anonymous `/api/*` → 401; **no-op in "open mode"**
+  when Auth0 is unconfigured, **503 fail-closed in production**). `src/lib/auth0.ts` +
+  `src/server/auth/session.ts` (`getSessionUser()`) derive the user server-side; events
+  store `created_by` (the Auth0 `sub`), and voting is one-per-user (`event_votes`, with a
+  **derived** score). Full detail in `docs/DEPLOYMENT.md` → Authentication.
+
+## Specialist agents — delegate domain work
+
+Route work to the owning agent in `.claude/agents/` instead of doing it inline:
+
+- **data-engineer** — **all database work**: schema, **migrations**, ingestion, ranking, `Data.md`.
+- **vercel-engineer** — Vercel deploys, env vars, integrations.
+- **devops-engineer** — CI, the branch/PR pipeline, build config.
+- **backend-engineer** / **frontend-engineer** / **qa-engineer** / **code-reviewer** — API / UI / tests / review.
+
+**Never run a DB migration or schema change yourself** — hand it to the data-engineer (it
+owns the release gate + UNPOOLED-URL rules above). Re-check this before any `db:*` command
+or promote-to-`main` step; it must hold across compacts and new sessions.
 
 ## Stack (do not swap without being asked)
 
@@ -50,7 +73,14 @@ Everything phase-specific sits behind a boundary; keep it that way.
   Node runtime — not edge); Vercel builds natively from source, so there's no
   `output: 'standalone'`.
 - **Neon serverless Postgres + PostGIS** via **Drizzle** (`drizzle-orm/neon-http`);
-  `drizzle-kit` for migrations. Schema in `src/server/db/schema.ts`.
+  `drizzle-kit` for migrations. Schema in `src/server/db/schema.ts`. **Migrations are NOT
+  in CD** (Vercel deploys code, not schema). Any schema change is a **release gate**: run
+  `pnpm db:migrate` against Neon **before** promoting to `main`, or production 500s. Use the
+  **UNPOOLED** URL for DDL —
+  `export DATABASE_URL=$(grep '^DATABASE_URL_UNPOOLED=' .env.local | cut -d= -f2- | tr -d '"')`.
+  **Database work (schema, migrations, ingestion, ranking) belongs to the data-engineer
+  agent — delegate it; never run a migration inline (see "Specialist agents").**
+- **Auth0** (`@auth0/nextjs-auth0` v4) — private app, login required; SDK routes at `/auth/*`.
 - Tailwind CSS 4. ESLint 9 flat config (`eslint.config.mjs`) + Prettier.
 - Vitest 4 + React Testing Library + jsdom. Playwright for one e2e smoke test.
 

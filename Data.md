@@ -46,19 +46,34 @@ Update this as decisions are made.
 The physical `events` table (`src/server/db/schema.ts`; first migration in
 `drizzle/` enables PostGIS):
 
-| Column        | Type                    | Notes                                     |
-| ------------- | ----------------------- | ----------------------------------------- |
-| `id`          | `uuid` (pk)             | primary key                               |
-| `title`       | `text`                  |                                           |
-| `description` | `text`                  |                                           |
-| `layer_ids`   | `text[]`                | GIN index (many-to-many layer membership) |
-| `geom`        | `geography(Point,4326)` | GiST index (spatial queries)              |
-| `year`        | `integer`               | btree index (negative = BCE)              |
-| `votes`       | `integer`               | net community score                       |
-| `created_at`  | `timestamptz`           | btree index (desc); importance recency    |
+| Column        | Type                    | Notes                                       |
+| ------------- | ----------------------- | ------------------------------------------- |
+| `id`          | `uuid` (pk)             | primary key                                 |
+| `title`       | `text`                  |                                             |
+| `description` | `text`                  |                                             |
+| `layer_ids`   | `text[]`                | GIN index (many-to-many layer membership)   |
+| `geom`        | `geography(Point,4326)` | GiST index (spatial queries)                |
+| `year`        | `integer`               | btree index (negative = BCE)                |
+| `votes`       | `integer`               | **base** score (see `event_votes` below)    |
+| `created_by`  | `text`                  | Auth0 `sub` of the author (btree; nullable) |
+| `created_at`  | `timestamptz`           | btree index (desc); importance recency      |
 
 `geom` replaces the domain model's `lng`/`lat` pair at the storage layer; the
 `AtlasEvent` type the client sees is unchanged (the repository maps between them).
+
+**`event_votes`** (per-user voting; migration `0001`) — `event_id uuid → events(id) on
+delete cascade`, `user_id text` (Auth0 `sub`), `direction text` (`'up'|'down'`),
+`created_at timestamptz`, **PK `(event_id, user_id)`** + index on `event_id`. The displayed
+score is **derived** — `events.votes` (the seed/base number) **plus** the ledger sum
+`Σ(±1)` over `event_votes` — so the counter can't drift from the ledger. `created_by` and
+per-user votes are populated from the Auth0 session server-side, never from the request body.
+
+**`user_views`** (append-only view-log; migration `0002`) — `id`, `user_id text`, `lng`/`lat`/
+`zoom` (`double precision`), `year integer`, `created_at timestamptz`; indexes on
+`(user_id, created_at desc)` + `created_at`. Captures the **User Context** (`x,y,z,date`) of
+settled views for a "places I've visited" history + analytics. **Deliberately orthogonal to
+`events`** (no FK, no PostGIS) so it locks in nothing; behind its own `ViewsRepository` seam.
+See `Concepts.md`.
 
 ### Local dev database
 

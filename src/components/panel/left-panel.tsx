@@ -50,22 +50,22 @@ export function LeftPanel() {
   );
 
   return (
-    <aside className="absolute top-0 bottom-14 left-0 z-10 flex w-80 max-w-[85vw] flex-col border-r border-white/10 bg-black/75 backdrop-blur">
-      <div className="space-y-2 border-b border-white/10 p-3">
+    <aside className="absolute top-3 bottom-28 left-3 z-10 flex w-72 max-w-[85vw] flex-col">
+      <div className="mb-2 space-y-2">
         <input
           type="search"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search events…"
           aria-label="Search events"
-          className="w-full rounded-md border border-white/10 bg-white/5 px-2.5 py-1.5 text-sm text-white outline-none placeholder:text-white/30 focus:border-emerald-400/40"
+          className="w-full rounded-md bg-black/30 px-2.5 py-1.5 text-sm text-white ring-1 ring-white/10 backdrop-blur-sm outline-none placeholder:text-white/30 focus:ring-emerald-400/40"
         />
-        <p className="font-mono text-[11px] text-emerald-300/70">
+        <p className="font-mono text-[11px] text-emerald-300/70 [text-shadow:0_1px_3px_rgba(0,0,0,0.9)]">
           {inView.length} event{inView.length === 1 ? "" : "s"} in view
         </p>
       </div>
 
-      <ul className="min-h-0 flex-1 overflow-y-auto">
+      <ul className="atlas-scroll flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-1">
         {ranked.map((event) => (
           <EventListItem
             key={event.id}
@@ -74,7 +74,7 @@ export function LeftPanel() {
           />
         ))}
         {ranked.length === 0 && (
-          <li className="p-4 text-center text-xs text-white/40">
+          <li className="rounded-md bg-black/20 p-4 text-center text-xs text-white/40 ring-1 ring-white/10 backdrop-blur-sm">
             {loading ? "Loading…" : "No events here. Zoom out, or add one."}
           </li>
         )}

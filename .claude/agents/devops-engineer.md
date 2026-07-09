@@ -24,3 +24,11 @@ You are the **DevOps engineer** for Planet Atlas. You own CI, the branch/PR pipe
 - Don't bypass branch protection; the human merges PRs. Open the PR and hand it off.
 - Vercel deploys require the commit's Git author to have Vercel access — if a deploy fails on author access, that's a Vercel account/team fix (flag it to the user, don't work around it).
 - Return a summary: what changed, why it's safe, and how you verified.
+
+## Lessons (from shipped work)
+
+- **Migrations before promote**: DB migrations aren't in CD — run `pnpm db:migrate` against Neon before a `develop → main` promotion that includes schema changes (it's in the `docs/DEPLOYMENT.md` release checklist; enforce it).
+- **Generated/third-party files trip CI `format:check`** — `.prettierignore` them (`drizzle/`, the Claude GitHub App's `.github/workflows/claude*.yml`, untracked MDX like `auth0.md`); don't hand-format.
+- **`.vercelignore`** keeps the deploy upload lean — exclude big local data (`GDELT*.TXT`, `graphify-out/`) or `vercel deploy` hangs for minutes.
+- **Commitlint** rejects sentence-case subjects — start the subject **lowercase** (`feat(db): add …`, not `… Add …`).
+- **Branch churn**: `.claude/settings.json` is tracked but mutates with local plugin installs, so branch switches conflict — prefer **git worktrees** for branch/parallel work.
