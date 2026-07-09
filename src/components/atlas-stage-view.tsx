@@ -11,22 +11,17 @@ import { PlacesPanel } from "@/components/places/places-panel";
 import { GeocodeSearch } from "@/components/search/geocode-search";
 import { MasterWidget } from "@/components/widget/master-widget";
 import { cn } from "@/lib/utils";
+import { useAtlas } from "@/state/atlas-context";
 
 /**
- * The full-screen stage. Presentational: the globe and toggle are injected so
- * this renders in jsdom without MapLibre or context. When `chromeVisible` is
- * false every overlay but the globe is unmounted (immersive mode) and the
- * wrapper gets `chrome-hidden`, which also hides the MapLibre zoom control.
+ * The full-screen stage. Presentational: the globe is injected so this renders
+ * in jsdom without MapLibre. When `chromeVisible` is false every overlay but the
+ * globe is unmounted (immersive mode) and the wrapper gets `chrome-hidden`,
+ * which also hides the MapLibre zoom control. The `ToolColumn` always renders:
+ * it holds the immersive toggle, which must survive as the restore control.
  */
-export function AtlasStageView({
-  chromeVisible,
-  globe,
-  toggle,
-}: {
-  chromeVisible: boolean;
-  globe: ReactNode;
-  toggle: ReactNode;
-}) {
+export function AtlasStageView({ globe }: { globe: ReactNode }) {
+  const { chromeVisible } = useAtlas();
   return (
     <div
       className={cn(
@@ -42,14 +37,15 @@ export function AtlasStageView({
           <PlacesPanel />
           <GeocodeSearch />
           <CoordinatePlate />
-          <ToolColumn />
           <AddControls />
           <PlaceInfoPanel />
           <YearStat />
           <TimelineStrip />
         </>
       )}
-      {toggle}
+      {/* Always mounted: the tool selector hides with the chrome, but the
+          immersive toggle it carries stays visible as the restore control. */}
+      <ToolColumn />
     </div>
   );
 }

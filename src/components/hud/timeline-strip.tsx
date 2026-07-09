@@ -91,7 +91,7 @@ export function TimelineStrip() {
   })).filter((t) => t.left > 0.001 && t.left < 0.999);
 
   return (
-    <div className="group absolute inset-x-0 bottom-[50px] z-40 pr-72 pb-2 pl-6 opacity-55 transition-opacity duration-200 focus-within:opacity-100 hover:opacity-100">
+    <div className="group pointer-events-none absolute inset-x-0 bottom-[50px] z-40 pr-72 pb-2 pl-6 opacity-55 transition-opacity duration-200 focus-within:opacity-100 hover:opacity-100">
       {/* Era labels reveal only when the strip is active. */}
       <div
         aria-hidden
@@ -122,7 +122,7 @@ export function TimelineStrip() {
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
         onKeyDown={onKeyDown}
-        className="relative flex h-6 cursor-pointer touch-none items-center outline-none select-none"
+        className="pointer-events-auto relative flex h-6 cursor-pointer touch-none items-center outline-none select-none"
       >
         <div className="relative h-[3px] w-full rounded-full bg-white/15 backdrop-blur-sm">
           {/* Filled portion up to the playhead. */}

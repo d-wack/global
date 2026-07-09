@@ -1,5 +1,5 @@
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import type { ReactNode } from "react";
 
 import { AtlasStageView } from "./atlas-stage-view";
@@ -17,34 +17,34 @@ function provider({ children }: { children: ReactNode }) {
 }
 
 const globe = <div data-testid="globe" />;
-const toggle = <button type="button">toggle</button>;
+
+afterEach(() => vi.unstubAllGlobals());
 
 describe("AtlasStageView", () => {
-  it("hides every overlay but keeps the globe and toggle in immersive mode", () => {
-    // No provider needed: with the chrome hidden, no overlay mounts to read it.
-    render(
-      <AtlasStageView chromeVisible={false} globe={globe} toggle={toggle} />,
-    );
-
-    expect(screen.getByTestId("globe")).toBeTruthy();
-    expect(screen.getByRole("button", { name: "toggle" })).toBeTruthy();
-    // The left events panel and the timeline scrubber are gone.
-    expect(screen.queryByRole("complementary")).toBeNull();
-    expect(screen.queryByText("PLANET ATLAS")).toBeNull();
-    expect(screen.queryByRole("slider")).toBeNull();
-  });
-
-  it("renders the overlays when the chrome is visible", () => {
+  it("renders the overlays and the toolbar when the chrome is visible", () => {
     stubFetch();
-    render(
-      <AtlasStageView chromeVisible={true} globe={globe} toggle={toggle} />,
-      {
-        wrapper: provider,
-      },
-    );
+    render(<AtlasStageView globe={globe} />, { wrapper: provider });
 
     expect(screen.getByText("PLANET ATLAS")).toBeTruthy();
     expect(screen.getByRole("complementary")).toBeTruthy();
-    vi.unstubAllGlobals();
+    expect(screen.getAllByRole("radio")).toHaveLength(3);
+    expect(screen.getByRole("button", { name: "Hide interface" })).toBeTruthy();
+  });
+
+  it("hides every overlay but keeps the globe and restore toggle in immersive mode", () => {
+    stubFetch();
+    render(<AtlasStageView globe={globe} />, { wrapper: provider });
+
+    // Enter immersive mode via the toolbar's toggle.
+    fireEvent.click(screen.getByRole("button", { name: "Hide interface" }));
+
+    expect(screen.getByTestId("globe")).toBeTruthy();
+    // The immersive toggle survives as the restore control.
+    expect(screen.getByRole("button", { name: "Show interface" })).toBeTruthy();
+    // Every gated overlay (panel, master widget, timeline) and the tools are gone.
+    expect(screen.queryByRole("complementary")).toBeNull();
+    expect(screen.queryByText("PLANET ATLAS")).toBeNull();
+    expect(screen.queryByRole("slider")).toBeNull();
+    expect(screen.queryByRole("radio")).toBeNull();
   });
 });

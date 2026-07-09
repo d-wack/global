@@ -39,4 +39,16 @@ describe("ToolColumn", () => {
     expect(inspect).toHaveAttribute("aria-checked", "true");
     expect(explore).toHaveAttribute("aria-checked", "false");
   });
+
+  it("carries the immersive toggle, which hides the tools when pressed", () => {
+    renderToolColumn();
+    expect(screen.getAllByRole("radio")).toHaveLength(3);
+
+    // The toggle offers to hide the interface while the chrome is shown.
+    fireEvent.click(screen.getByRole("button", { name: "Hide interface" }));
+
+    // In immersive mode the tools are gone; only the restore control remains.
+    expect(screen.queryByRole("radio")).toBeNull();
+    expect(screen.getByRole("button", { name: "Show interface" })).toBeTruthy();
+  });
 });
