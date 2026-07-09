@@ -50,7 +50,7 @@ export function LeftPanel() {
   );
 
   return (
-    <aside className="absolute top-3 bottom-16 left-3 z-10 flex w-72 max-w-[85vw] flex-col">
+    <aside className="absolute top-3 bottom-28 left-3 z-10 flex w-72 max-w-[85vw] flex-col">
       <div className="mb-2 space-y-2">
         <input
           type="search"
@@ -65,7 +65,7 @@ export function LeftPanel() {
         </p>
       </div>
 
-      <ul className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-0.5">
+      <ul className="atlas-scroll flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-1">
         {ranked.map((event) => (
           <EventListItem
             key={event.id}

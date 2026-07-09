@@ -91,7 +91,7 @@ export function TimelineStrip() {
   })).filter((t) => t.left > 0.001 && t.left < 0.999);
 
   return (
-    <div className="group absolute inset-x-0 bottom-[50px] z-40 px-40 pb-2 opacity-55 transition-opacity duration-200 focus-within:opacity-100 hover:opacity-100">
+    <div className="group absolute inset-x-0 bottom-[50px] z-40 pr-72 pb-2 pl-6 opacity-55 transition-opacity duration-200 focus-within:opacity-100 hover:opacity-100">
       {/* Era labels reveal only when the strip is active. */}
       <div
         aria-hidden

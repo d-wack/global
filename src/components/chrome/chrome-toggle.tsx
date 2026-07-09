@@ -24,8 +24,10 @@ export function ChromeToggle({
       aria-label={label}
       title={`${label} (H)`}
       className={cn(
-        "absolute top-20 left-[21rem] z-50 rounded-lg border border-white/10 bg-black/80 p-2",
-        "text-white/70 shadow-lg backdrop-blur transition-colors",
+        // Docked directly under the MapLibre zoom control (same left offset) so
+        // the two read as one top-left control cluster instead of overlapping.
+        "absolute top-[116px] left-[21rem] z-50 flex h-[30px] w-[30px] items-center justify-center",
+        "rounded border border-white/10 bg-black/80 text-white/70 shadow-lg backdrop-blur transition-colors",
         "hover:bg-white/10 hover:text-white",
         "focus-visible:ring-2 focus-visible:ring-emerald-400/70 focus-visible:outline-none",
       )}
