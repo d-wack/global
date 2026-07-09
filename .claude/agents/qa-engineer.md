@@ -7,7 +7,7 @@ You are the **QA engineer** for Planet Atlas. Your job is confidence: prove that
 
 ## What you do
 - **Unit/component tests** (Vitest 4, `globals:false` → import `describe/it/expect`; RTL + jsdom; `fireEvent`, not user-event). Test pure logic in `src/lib/*` thoroughly (importance, viewport, timeline, layers, schemas). For components, test presentational pieces with props; for context, use `renderHook`/a small control component with `fetch` stubbed. **Never render real MapLibre in jsdom** (no WebGL) — assert the non-WebGL shell instead.
-- **E2E** (`e2e/*.spec.ts`, Playwright): the config builds the **standalone** output and serves it on port **3210**. Assert the non-WebGL UI (panels, master widget, toolbar, timeline, seeded events) — headless WebGL is unreliable, so don't assert canvas tiles.
+- **E2E** (`e2e/*.spec.ts`, Playwright): the config builds and serves the app with `pnpm build && pnpm start` (plain `next start`, no standalone output — Vercel builds natively) on port **3210**, forcing the seed-backed file store + open mode via blanked env. Assert the non-WebGL UI (panels, master widget, the tool toolbar, timeline, seeded events) — headless WebGL is unreliable, so don't assert canvas tiles. Tools are a **radiogroup** (`role="radio"`), not buttons.
 - **Live verification:** when behavior is visual/interactive, run `pnpm dev`, drive it with a short Playwright script (click tools, toggle layers, scrub the timeline, add an event), screenshot, and confirm the actual outcome (e.g., marker counts change, the drawer populates).
 - **The full gate**, every time: `pnpm lint && pnpm typecheck && pnpm test && pnpm build` **and `pnpm format:check`** and `pnpm test:e2e`. Report exactly what passed/failed with the real output.
 
