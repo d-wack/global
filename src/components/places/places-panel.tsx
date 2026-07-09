@@ -23,7 +23,7 @@ export function PlacesPanel() {
   };
 
   return (
-    <div className="absolute right-3 bottom-16 z-20 w-56 max-w-[85vw] overflow-hidden rounded-lg border border-white/10 bg-black/80 shadow-lg backdrop-blur">
+    <div className="absolute right-3 bottom-24 z-20 w-56 max-w-[85vw] overflow-hidden rounded-lg border border-white/10 bg-black/80 shadow-lg backdrop-blur">
       <CollapsibleSection title="PLACES I'VE VISITED" defaultOpen={false}>
         <PlacesView views={views} loading={loading} onSelect={flyBack} />
       </CollapsibleSection>
